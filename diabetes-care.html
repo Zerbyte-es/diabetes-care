@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GlucoCare – Diabetes Manager</title>
+<script src="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/chart.js)"></script>
+<style>
+  :root { --green:#16a34a; --red:#dc2626; --blue:#2563eb; --bg:#f1f5f9; --card:#fff; }
+  * { box-sizing:border-box; font-family: system-ui, Arial, sans-serif; }
+  body { margin:0; background:var(--bg); color:#0f172a; }
+  header { background:var(--blue); color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; }
+  nav button { background:transparent; border:1px solid #fff6; color:#fff; margin-left:6px; }
+  nav button.active { background:#fff; color:var(--blue); }
+  main { max-width:1000px; margin:20px auto; padding:0 14px; }
+  .card { background:var(--card); border-radius:12px; padding:18px; margin-bottom:16px; box-shadow:0 1px 4px #0001; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; }
+  input, select, button { padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:15px; }
+  input, select { width:100%; margin:6px 0 12px; }
+  button { background:var(--blue); color:#fff; border:none; cursor:pointer; }
+  button.danger { background:var(--red); } button.ok { background:var(--green); }
+  table { width:100%; border-collapse:collapse; } td, th { padding:8px; border-bottom:1px solid #e2e8f0; text-align:left; }
+  .stat { font-size:28px; font-weight:bold; }
+  .good { color:var(--green); } .bad { color:var(--red); } .warn { color:#d97706; }
+  .hidden { display:none !important; }
+  #auth { max-width:400px; margin:60px auto; }
+  #alertBox { position:fixed; inset:0; background:#000a; display:flex; align-items:center; justify-content:center; z-index:99; }
+  #alertBox .card { max-width:420px; text-align:center; border:4px solid var(--red); }
+  .banner { padding:12px; border-radius:8px; margin-bottom:12px; font-weight:600; }
+  .banner.red { background:#fee2e2; color:var(--red); } .banner.green { background:#dcfce7; color:var(--green); }
+  .banner.orange { background:#ffedd5; color:#c2410c; }
+  .food li { margin-bottom:6px; }
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH ============ -->
+<div id="auth" class="card">
+  <h2 id="authTitle">Login to GlucoCare</h2>
+  <div id="nameField" class="hidden"><label>Full name</label><input id="aName" /></div>
+  <label>Email</label><input id="aEmail" type="email" />
+  <label>Password</label><input id="aPass" type="password" />
+  <button id="authBtn" style="width:100%">Login</button>
+  <p style="text-align:center">
+    <a href="#" id="toggleAuth">No account? Create one</a>
+  </p>
+  <p id="authMsg" class="bad"></p>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden">
+  <header>
+    <strong>🩺 GlucoCare</strong>
+    <nav>
+      <button data-tab="dashboard" class="active">Dashboard</button>
+      <button data-tab="glucose">Sugar Levels</button>
+      <button data-tab="meds">Medications</button>
+      <button data-tab="food">Food</button>
+      <button id="logoutBtn">Logout</button>
+    </nav>
+  </header>
+  <main>
+    <div id="reminderBanner"></div>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="tab">
+      <h2>Welcome, <span id="uName"></span></h2>
+      <div class="grid">
+        <div class="card">Last reading<div class="stat" id="sLast">—</div></div>
+        <div class="card">7-day average<div class="stat" id="sAvg">—</div></div>
+        <div class="card">In target range<div class="stat" id="sRange">—</div></div>
+        <div class="card">Meds taken today<div class="stat" id="sMeds">—</div></div>
+      </div>
+      <div class="card">
+        <h3>Health progress <span id="trendLabel"></span></h3>
+        <canvas id="healthChart" height="110"></canvas>
+        <small>Daily health score (0–100) = sugar readings in range + checks done on schedule + medications taken.</small>
+      </div>
+    </section>
+
+    <!-- GLUCOSE -->
+    <section id="glucose" class="tab hidden">
+      <div class="card">
+        <h3>Upload a sugar reading</h3>
+        <div class="grid">
+          <div><label>Reading (mg/dL)</label><input id="gVal" type="number" placeholder="e.g. 110" /></div>
+          <div><label>When</label>
+            <select id="gCtx"><option>Fasting</option><option>Before meal</option><option>After meal</option><option>Bedtime</option><option>Random</option></select></div>
+          <div><label>Photo of meter (optional)</label><input id="gImg" type="file" accept="image/*" /></div>
+        </div>
+        <button id="gSave" class="ok">Upload result</button>
+      </div>
+      <div class="card">
+        <h3>Check schedule</h3>
+        <p>Times you must check your sugar each day:</p>
+        <div id="checkTimes"></div>
+        <input id="newCheck" type="time" style="width:auto" /> <button id="addCheck">Add time</button>
+      </div>
+      <div class="card">
+        <h3>History</h3>
+        <table><thead><tr><th>Date/Time</th><th>Reading</th><th>When</th><th>Status</th><th>Photo</th></tr></thead>
+        <tbody id="gTable"></tbody></table>
+      </div>
+    </section>
+
+    <!-- MEDS -->
+    <section id="meds" class="tab hidden">
+      <div class="card">
+        <h3>Add medication</h3>
+        <div class="grid">
+          <div><label>Name</label><input id="mName" placeholder="e.g. Metformin" /></div>
+          <div><label>Dose</label><input id="mDose" placeholder="500mg" /></div>
+          <div><label>Time</label><input id="mTime" type="time" /></div>
+        </div>
+        <button id="mSave">Add</button>
+      </div>
+      <div class="card">
+        <h3>Today's medications</h3>
+        <table><thead><tr><th>Time</th><th>Medication</th><th>Dose</th><th>Status</th><th></th></tr></thead>
+        <tbody id="mTable"></tbody></table>
+      </div>
+    </section>
+
+    <!-- FOOD -->
+    <section id="food" class="tab hidden">
+      <div class="card">
+        <h3>Today's suggested meals</h3>
+        <div id="foodAdvice"></div>
+        <div id="foodPlan" class="food"></div>
+        <button id="newPlan">Suggest different meals</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ALERT MODAL -->
+<div id="alertBox" class="hidden">
+  <div class="card">
+    <h2 id="alertTitle" class="bad"></h2>
+    <p id="alertText"></p>
+    <button id="alertOk" class="danger">I understand</button>
+  </div>
+</div>
+
+<script>
+/* ================= CONFIG (mg/dL) ================= */
+const LOW = 70, TARGET_MAX = 180, HIGH = 250;   // HIGH or above → see doctor now
+const REMINDER_INTERVAL = 30 * 60 * 1000;      // 30 minutes
+const CHECK_GRACE = 15;                         // minutes after a scheduled time before it counts as missed
+
+/* ================= STORAGE ================= */
+const db = {
+  users: () => JSON.parse(localStorage.getItem('gc_users') || '{}'),
+  saveUsers: u => localStorage.setItem('gc_users', JSON.stringify(u)),
+  data: email => JSON.parse(localStorage.getItem('gc_data_' + email) ||
+     '{"readings":[],"meds":[],"medLog":{},"checkTimes":["07:00","13:00","19:00"],"foodSeed":0}'),
+  saveData: (email, d) => localStorage.setItem('gc_data_' + email, JSON.stringify(d))
+};
+let user = null, data = null, chart = null, lastReminder = 0;
+
+async function hash(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+const $ = id => document.getElementById(id);
+const today = () => new Date().toISOString().slice(0, 10);
+const save = () => db.saveData(user.email, data);
+
+/* ================= AUTH ================= */
+let signup = false;
+$('toggleAuth').onclick = e => {
+  e.preventDefault(); signup = !signup;
+  $('nameField').classList.toggle('hidden', !signup);
+  $('authTitle').textContent = signup ? 'Create your account' : 'Login to GlucoCare';
+  $('authBtn').textContent = signup ? 'Create account' : 'Login';
+  $('toggleAuth').textContent = signup ? 'Have an account? Login' : 'No account? Create one';
+  $('authMsg').textContent = '';
+};
+$('authBtn').onclick = async () => {
+  const email = $('aEmail').value.trim().toLowerCase(), pass = $('aPass').value;
+  if (!email || pass.length < 6) return $('authMsg').textContent = 'Enter an email and a password of 6+ characters.';
+  const users = db.users();
+  if (signup) {
+    if (users[email]) return $('authMsg').textContent = 'Account already exists.';
+    const salt = crypto.randomUUID();
+    users[email] = { name: $('aName').value || email, salt, hash: await hash(salt + pass) };
+    db.saveUsers(users);
+  } else {
+    const u = users[email];
+    if (!u || u.hash !== await hash(u.salt + pass)) return $('authMsg').textContent = 'Wrong email or password.';
+  }
+  sessionStorage.setItem('gc_session', email);
+  startApp(email);
+};
+$('logoutBtn').onclick = () => { sessionStorage.removeItem('gc_session'); location.reload(); };
+
+function startApp(email) {
+  user = { email, ...db.users()[email] };
+  data = db.data(email);
+  $('auth').classList.add('hidden'); $('app').classList.remove('hidden');
+  $('uName').textContent = user.name;
+  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+  renderAll();
+  setInterval(tick, 60 * 1000); tick();
+}
+
+/* ================= TABS ================= */
+document.querySelectorAll('nav button[data-tab]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
+  $(b.dataset.tab).classList.remove('hidden');
+  if (b.dataset.tab === 'dashboard') renderDashboard();
+});
+
+/* ================= ALERTS ================= */
+function beep() {
+  try { const c = new AudioContext(), o = c.createOscillator(); o.connect(c.destination);
+        o.frequency.value = 880; o.start(); setTimeout(() => o.stop(), 600); } catch {}
+}
+function alertUser(title, text) {
+  $('alertTitle').textContent = title; $('alertText').textContent = text;
+  $('alertBox').classList.remove('hidden'); beep();
+  if ('Notification' in window && Notification.permission === 'granted') new Notification(title, { body: text });
+}
+$('alertOk').onclick = () => $('alertBox').classList.add('hidden');
+
+function status(v) {
+  if (v >= HIGH) return { t: 'DANGER – HIGH', c: 'bad' };
+  if (v > TARGET_MAX) return { t: 'High', c: 'warn' };
+  if (v < LOW) return { t: 'LOW', c: 'bad' };
+  return { t: 'Normal', c: 'good' };
+}
+
+/* ================= GLUCOSE ================= */
+$('gSave').onclick = () => {
+  const v = Number($('gVal').value);
+  if (!v || v < 20 || v > 600) return alert('Enter a valid reading (20–600 mg/dL).');
+  const file = $('gImg').files[0];
+  const store = img => {
+    data.readings.push({ v, ctx: $('gCtx').value, time: new Date().toISOString(), img });
+    save(); $('gVal').value = ''; $('gImg').value = '';
+    renderAll(); analyse(v);
+  };
+  if (file) { const r = new FileReader(); r.onload = () => store(r.result); r.readAsDataURL(file); }
+  else store(null);
+};
+
+function analyse(v) {
+  if (v >= HIGH) return alertUser('🚨 Sugar level too high!',
+    `Your reading is ${v} mg/dL. Please visit your diabetes doctor IMMEDIATELY. If you feel confused, very thirsty, are vomiting or breathing fast, go to the nearest hospital now.`);
+  if (v < LOW) return alertUser('⚠️ Sugar level too low!',
+    `Your reading is ${v} mg/dL. Take 15g of fast sugar now (half a glass of juice or soft drink, or 3 sugar cubes), check again in 15 minutes, and contact your doctor.`);
+  // Pattern check: 3 high readings in a row
+  const last3 = data.readings.slice(-3);
+  if (last3.length === 3 && last3.every(r => r.v > TARGET_MAX))
+    alertUser('⚠️ Your sugar has stayed high', 'Your last 3 readings were above target. Please book an appointment with your diabetes doctor soon.');
+}
+
+$('addCheck').onclick = () => {
+  const t = $('newCheck').value; if (!t || data.checkTimes.includes(t)) return;
+  data.checkTimes.push(t); data.checkTimes.sort(); save(); renderGlucose();
+};
+function removeCheck(t) { data.checkTimes = data.checkTimes.filter(x => x !== t); save(); renderGlucose(); }
+
+function renderGlucose() {
+  $('checkTimes').innerHTML = data.checkTimes.map(t =>
+    `<span style="display:inline-block;margin:4px;padding:6px 10px;background:#e0e7ff;border-radius:20px">${t}
+     <a href="#" onclick="removeCheck('${t}');return false">✕</a></span>`).join('');
+  $('gTable').innerHTML = [...data.readings].reverse().map(r => {
+    const s = status(r.v);
+    return `<tr><td>${new Date(r.time).toLocaleString()}</td><td><b>${r.v}</b></td><td>${r.ctx}</td>
+      <td class="${s.c}">${s.t}</td><td>${r.img ? `<img src="${r.img}" width="50">` : '—'}</td></tr>`;
+  }).join('') || '<tr><td colspan="5">No readings yet.</td></tr>';
+}
+
+/* ================= MISSED-CHECK LOGIC ================= */
+function minutesOf(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+function overdueCheck() {
+  const now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
+  const todays = data.readings.filter(r => r.time.slice(0, 10) === today())
+                              .map(r => { const d = new Date(r.time); return d.getHours() * 60 + d.getMinutes(); });
+  // A scheduled check is missed if its time + grace has passed and no reading since that time
+  return data.checkTimes.find(t => {
+    const m = minutesOf(t);
+    return nowMin >= m + CHECK_GRACE && !todays.some(rm => rm >= m - 30);
+  });
+}
+
+/* ================= MEDICATIONS ================= */
+$('mSave').onclick = () => {
+  const name = $('mName').value.trim(), dose = $('mDose').value.trim(), time = $('mTime').value;
+  if (!name || !time) return alert('Enter medication name and time.');
+  data.meds.push({ id: Date.now(), name, dose, time }); data.meds.sort((a, b) => a.time.localeCompare(b.time));
+  save(); $('mName').value = $('mDose').value = ''; renderMeds();
+};
+function takeMed(id) { (data.medLog[today()] ||= []).push(id); save(); renderAll(); }
+function deleteMed(id) { data.meds = data.meds.filter(m => m.id !== id); save(); renderAll(); }
+const takenToday = id => (data.medLog[today()] || []).includes(id);
+
+function renderMeds() {
+  $('mTable').innerHTML = data.meds.map(m => `<tr><td>${m.time}</td><td>${m.name}</td><td>${m.dose}</td>
+    <td>${takenToday(m.id) ? '<span class="good">✔ Taken</span>' : `<button class="ok" onclick="takeMed(${m.id})">Mark taken</button>`}</td>
+    <td><a href="#" onclick="deleteMed(${m.id});return false">Delete</a></td></tr>`).join('')
+    || '<tr><td colspan="5">No medications added.</td></tr>';
+}
+
+/* ================= REMINDER LOOP (every minute) ================= */
+const notifiedMeds = new Set();
+function tick() {
+  const now = new Date(), hm = now.toTimeString().slice(0, 5), nowMin = minutesOf(hm);
+  let banner = '';
+
+  // Medication reminders: at the exact time, then repeat every 30 min until marked taken
+  data.meds.forEach(m => {
+    if (takenToday(m.id)) return;
+    const diff = nowMin - minutesOf(m.time);
+    if (diff >= 0) {
+      banner += `<div class="banner orange">💊 Time to take ${m.name} ${m.dose} (due ${m.time})</div>`;
+      const key = today() + m.id + Math.floor(diff / 30);
+      if (diff % 30 === 0 && !notifiedMeds.has(key)) {
+        notifiedMeds.add(key);
+        alertUser('💊 Medication reminder', `Please take ${m.name} ${m.dose} now. It was due at ${m.time}.`);
+      }
+    }
+  });
+
+  // Missed sugar check: remind every 30 minutes until a reading is uploaded
+  const missed = overdueCheck();
+  if (missed) {
+    banner = `<div class="banner red">🩸 You missed your ${missed} sugar check. Please check and upload your result now.</div>` + banner;
+    if (Date.now() - lastReminder >= REMINDER_INTERVAL) {
+      lastReminder = Date.now();
+      alertUser('🩸 Sugar check overdue', `You have not checked your sugar level (scheduled ${missed}). Please check it and upload the result now. We will remind you every 30 minutes.`);
+    }
+  } else lastReminder = 0;
+
+  $('reminderBanner').innerHTML = banner;
+}
+
+/* ================= HEALTH SCORE & DASHBOARD ================= */
+function dayScore(dateStr) {
+  const rs = data.readings.filter(r => r.time.slice(0, 10) === dateStr);
+  const inRange = rs.length ? rs.filter(r => r.v >= LOW && r.v <= TARGET_MAX).length / rs.length : 0;
+  const checks = data.checkTimes.length ? Math.min(rs.length / data.checkTimes.length, 1) : 1;
+  const meds = data.meds.length ? (data.medLog[dateStr] || []).length / data.meds.length : 1;
+  return Math.round(inRange * 50 + checks * 25 + Math.min(meds, 1) * 25);
+}
+
+function renderDashboard() {
+  const rs = data.readings, last = rs[rs.length - 1];
+  const week = rs.filter(r => Date.now() - new Date(r.time) < 7 * 864e5);
+  if (last) { const s = status(last.v); $('sLast').innerHTML = `<span class="${s.c}">${last.v}</span>`; }
+  if (week.length) {
+    const avg = Math.round(week.reduce((a, r) => a + r.v, 0) / week.length);
+    $('sAvg').innerHTML = `<span class="${status(avg).c}">${avg}</span>`;
+    const pct = Math.round(week.filter(r => r.v >= LOW && r.v <= TARGET_MAX).length / week.length * 100);
+    $('sRange').innerHTML = `<span class="${pct >= 70 ? 'good' : 'bad'}">${pct}%</span>`;
+  }
+  $('sMeds').textContent = `${(data.medLog[today()] || []).length}/${data.meds.length}`;
+
+  // Last 14 days of scores
+  const labels = [], scores = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 864e5).toISOString().slice(0, 10);
+    labels.push(d.slice(5)); scores.push(dayScore(d));
+  }
+  // Doing well = recent 3-day average >= previous 3 days and >= 60
+  const recent = scores.slice(-3).reduce((a, b) => a + b) / 3;
+  const prev = scores.slice(-6, -3).reduce((a, b) => a + b) / 3;
+  const good = recent >= 60 && recent >= prev;
+  const color = good ? '#16a34a' : '#dc2626';
+  $('trendLabel').innerHTML = good ? '<span class="good">▲ Doing well – keep it up!</span>'
+                                   : '<span class="bad">▼ Needs attention</span>';
+
+  if (chart) chart.destroy();
+  chart = new Chart($('healthChart'), {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Health score', data: scores, borderColor: color,
+            backgroundColor: color + '33', fill: true, tension: .35, pointRadius: 4 }] },
+    options: { scales: { y: { min: 0, max: 100 } }, plugins: { legend: { display: false } } }
+  });
+}
+
+/* ================= FOOD SUGGESTIONS ================= */
+const FOODS = {
+  breakfast: ['Moi moi with a boiled egg and garden egg', 'Oats (unsweetened) with groundnuts and a small apple',
+    'Vegetable omelette with a slice of whole-wheat bread', 'Akara (small portion) with unsweetened pap made with soya',
+    'Boiled unripe plantain with egg sauce', 'Greek yoghurt (plain) with chia seeds and a few berries'],
+  lunch: ['Beans porridge (more beans, little palm oil) with vegetables', 'Brown rice (small cup) with grilled fish and salad',
+    'Unripe plantain amala with efo riro and fish', 'Ofada rice (small portion) with vegetable sauce and chicken (no skin)',
+    'Grilled chicken salad with cucumber, tomato and avocado', 'Okra soup with fish and a small wrap of oat or wheat swallow'],
+  dinner: ['Pepper soup with fish or chicken and vegetables', 'Vegetable soup (edikang ikong) with a small portion of wheat swallow',
+    'Stir-fried vegetables with turkey', 'Boiled yam (2 small slices) with garden egg sauce',
+    'Grilled fish with steamed vegetables', 'Bean salad with onions, tomatoes and eggs'],
+  snacks: ['A handful of groundnuts or cashews', 'Cucumber or carrot sticks', 'Garden eggs', 'A small orange or guava',
+    'Boiled egg', 'Tiger nuts (small handful)']
+};
+const pick = (arr, seed, n = 1) => Array.from({ length: n }, (_, i) => arr[(seed * 7 + i * 3 + new Date().getDate()) % arr.length]);
+
+function renderFood() {
+  const recent = data.readings.slice(-5);
+  const avg = recent.length ? recent.reduce((a, r) => a + r.v, 0) / recent.length : null;
+  let advice = '<div class="banner green">Your recent readings look good. Keep balanced portions.</div>';
+  if (avg === null) advice = '<div class="banner orange">Upload sugar readings so we can personalise your meals.</div>';
+  else if (avg > TARGET_MAX) advice = '<div class="banner red">Your sugar has been high. Cut down on starch (rice, yam, garri, bread), avoid sugary drinks, and fill half your plate with vegetables.</div>';
+  else if (avg < LOW + 20) advice = '<div class="banner orange">Your sugar has been low. Do not skip meals and keep a healthy snack with you.</div>';
+  const s = data.foodSeed;
+  $('foodAdvice').innerHTML = advice;
+  $('foodPlan').innerHTML = `<ul>
+    <li><b>Breakfast:</b> ${pick(FOODS.breakfast, s)}</li>
+    <li><b>Mid-morning snack:</b> ${pick(FOODS.snacks, s)}</li>
+    <li><b>Lunch:</b> ${pick(FOODS.lunch, s + 1)}</li>
+    <li><b>Afternoon snack:</b> ${pick(FOODS.snacks, s + 2)}</li>
+    <li><b>Dinner:</b> ${pick(FOODS.dinner, s + 3)}</li></ul>
+    <p><b>Avoid:</b> soft drinks, sweetened juice, white bread, large portions of white rice, pastries and fried snacks.
+    <b>Drink:</b> plenty of water.</p>`;
+}
+$('newPlan').onclick = () => { data.foodSeed++; save(); renderFood(); };
+
+/* ================= INIT ================= */
+function renderAll() { renderGlucose(); renderMeds(); renderFood(); renderDashboard(); }
+const session = sessionStorage.getItem('gc_session');
+if (session && db.users()[session]) startApp(session);
+</script>
+</body>
+</html>
