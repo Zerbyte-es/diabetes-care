@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script data-tmly-media-guard="1">(function(){"use strict";
+var T=window.__tmly||(window.__tmly=(function(){
+var o={},n=String(window.name||"");
+if(n.slice(0,5)==="tmly:"){n.slice(5).split("&").forEach(function(kv){
+var i=kv.indexOf("=");if(i>0){o[kv.slice(0,i)]=kv.slice(i+1)}})}
+return o})());
+if(T.presentation!=="preview"){return}
+var K="tmly:media-muted:"+String(location.pathname).replace(/[^/]*$/,"");
+var muted=false;try{muted=localStorage.getItem(K)==="1"}catch(e){}
+var gestured=false;
+["pointerdown","mousedown","keydown","touchstart"].forEach(function(t){
+document.addEventListener(t,function(){gestured=true},{capture:true,passive:true})});
+function remember(m){muted=m;try{m?localStorage.setItem(K,"1"):localStorage.removeItem(K)}catch(e){}}
+function announcePaused(el){try{el.dispatchEvent(new Event("pause"))}catch(e){}}
+function harden(el){
+el.autoplay=false;el.removeAttribute("autoplay");
+if(el.getAttribute("preload")==="auto"){el.setAttribute("preload","none")}
+if(muted){el.muted=true}
+if(!gestured&&!el.paused){try{el.pause()}catch(e){}}}
+var play=HTMLMediaElement.prototype.play;
+HTMLMediaElement.prototype.play=function(){
+if(!gestured){announcePaused(this);
+return Promise.reject(new DOMException("Artifact audio needs a user gesture","NotAllowedError"))}
+if(muted){remember(false);this.muted=false}
+return play.apply(this,arguments)};
+var acProtos=[];
+function guardAC(n){
+var N=window[n];if(!N||!N.prototype){return}
+if(acProtos.indexOf(N.prototype)<0){acProtos.push(N.prototype);
+var res=N.prototype.resume;
+if(typeof res==="function"){N.prototype.resume=function(){
+if(!gestured){return Promise.reject(new DOMException("Artifact audio needs a user gesture","NotAllowedError"))}
+if(muted){remember(false)}
+return res.apply(this,arguments)}}}
+var W=function(o){var c=arguments.length?new N(o):new N();
+if(!gestured){try{c.suspend()}catch(e){}}return c};
+W.prototype=N.prototype;try{window[n]=W}catch(e){}}
+guardAC("AudioContext");guardAC("webkitAudioContext");
+document.addEventListener("play",function(e){
+var el=e.target;if(el instanceof HTMLMediaElement&&!gestured){try{el.pause()}catch(err){}}},true);
+document.addEventListener("pause",function(e){
+if(e.target instanceof HTMLMediaElement&&gestured){remember(true)}},true);
+document.addEventListener("volumechange",function(e){
+var el=e.target;if(el instanceof HTMLMediaElement&&gestured){remember(el.muted||el.volume===0)}},true);
+function sweep(n){if(n&&n.querySelectorAll){var l=n.querySelectorAll("audio,video");
+for(var i=0;i<l.length;i++){harden(l[i])}}}
+new MutationObserver(function(rs){for(var i=0;i<rs.length;i++){var a=rs[i].addedNodes;
+for(var j=0;j<a.length;j++){var n=a[j];
+if(n instanceof HTMLMediaElement){harden(n)}else{sweep(n)}}}})
+.observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener("DOMContentLoaded",function(){sweep(document)});
+sweep(document)})();</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GlucoCare — Diabetes Management</title>
+<meta name="description" content="A calm, private diabetes management companion: log blood sugar, track medications, get meal ideas and see your care trend.">
+<style>
+:root{
+  --teal-900:#0b3f3a;
+  --teal-700:#0f766e;
+  --teal-600:#12897f;
+  --teal-500:#14a89b;
+  --teal-100:#d7f0ec;
+  --teal-50:#eefaf8;
+  --lilac-700:#6d5bb8;
+  --lilac-600:#7c6bd0;
+  --lilac-500:#9a8ce0;
+  --lilac-200:#ddd6f7;
+  --lilac-100:#ece7fb;
+  --lilac-50:#f6f3fe;
+  --ink:#16211f;
+  --ink-2:#3d4b48;
+  --muted:#6b7b78;
+  --line:#e2e8e6;
+  --bg:#f5f8f7;
+  --card:#ffffff;
+  --green:#0f9d76;
+  --amber:#c98a1c;
+  --red:#cf3f3f;
+  --red-bg:#fdeceb;
+  --amber-bg:#fdf4e3;
+  --green-bg:#e8f7f1;
+  --radius:16px;
+  --shadow:0 1px 2px rgba(16,40,36,.05), 0 8px 24px -12px rgba(16,40,36,.18);
+  --font:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  font-size:15px;
+  line-height:1.5;
+}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:inherit}
+h1,h2,h3,h4{margin:0;line-height:1.25;letter-spacing:-.01em}
+a{color:var(--teal-700)}
+.hidden{display:none !important}
+
+/* ---------- AUTH ---------- */
+#authScreen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px 18px;
+  background:
+    radial-gradient(900px 500px at 12% -10%, var(--teal-50), transparent 60%),
+    radial-gradient(800px 500px at 100% 110%, var(--lilac-50), transparent 60%),
+    var(--bg);
+}
+.auth-wrap{width:100%;max-width:940px;display:grid;grid-template-columns:1.05fr .95fr;gap:0;background:var(--card);border-radius:24px;box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--line)}
+.auth-side{
+  background:var(--teal-900);
+  color:#eafaf7;
+  padding:44px 40px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  position:relative;
+}
+.auth-side .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;letter-spacing:-.02em;color:#ffffff}
+.auth-side h2{font-size:30px;margin:34px 0 12px;color:#fff;letter-spacing:-.03em}
+.auth-side p{color:#a9d6cf;margin:0;font-size:14.5px;max-width:34ch}
+.auth-side ul{list-style:none;padding:0;margin:26px 0 0;display:grid;gap:12px}
+.auth-side li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:#c9e8e3}
+.auth-side li span.dot{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;flex:0 0 20px;font-size:11px;color:#8fe3d6}
+.auth-side .foot{font-size:11.5px;color:#7fb3ac;margin-top:30px;line-height:1.5}
+.auth-main{padding:40px 38px}
+.auth-main h1{font-size:23px;margin-bottom:6px}
+.auth-main .sub{color:var(--muted);font-size:13.5px;margin:0 0 22px}
+.tabs{display:flex;background:var(--bg);border-radius:12px;padding:4px;margin-bottom:22px;border:1px solid var(--line)}
+.tabs button{flex:1;border:0;background:transparent;padding:9px 10px;border-radius:9px;font-weight:600;color:var(--muted);font-size:13.5px;transition:.15s}
+.tabs button.active{background:var(--card);color:var(--teal-700);box-shadow:0 1px 3px rgba(16,40,36,.12)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.field input,.field select,.field textarea{
+  width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink);
+  transition:.15s;outline:none;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal-500);box-shadow:0 0 0 3px var(--teal-100)}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border:0;border-radius:11px;padding:11px 18px;font-weight:650;font-size:14px;
+  background:var(--teal-700);color:#fff;transition:.15s;
+}
+.btn:hover{background:var(--teal-600)}
+.btn:active{transform:translateY(1px)}
+.btn.block{width:100%}
+.btn.ghost{background:transparent;color:var(--teal-700);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--teal-50)}
+.btn.lilac{background:var(--lilac-600)}
+.btn.lilac:hover{background:var(--lilac-700)}
+.btn.small{padding:7px 12px;font-size:12.5px;border-radius:9px}
+.btn.danger{background:var(--red)}
+.btn.danger:hover{background:#b83434}
+.auth-msg{font-size:13px;padding:10px 12px;border-radius:10px;margin-bottom:14px;display:none}
+.auth-msg.err{display:block;background:var(--red-bg);color:#9c2b2b;border:1px solid #f6cfcd}
+.auth-msg.ok{display:block;background:var(--green-bg);color:#0a6b52;border:1px solid #c6ecdd}
+.demo-box{margin-top:18px;padding:13px 14px;border:1px dashed var(--lilac-200);background:var(--lilac-50);border-radius:12px;font-size:12.5px;color:var(--ink-2)}
+.demo-box b{color:var(--lilac-700)}
+.demo-box .row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+.demo-box code{background:#fff;border:1px solid var(--lilac-200);padding:2px 6px;border-radius:6px;font-size:12px}
+
+/* ---------- APP SHELL ---------- */
+#app{display:none;min-height:100vh}
+#app.on{display:block}
+.shell{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.sidebar{
+  background:var(--card);border-right:1px solid var(--line);
+  padding:22px 16px;display:flex;flex-direction:column;gap:6px;
+  position:sticky;top:0;height:100vh;
+}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px;font-weight:750;font-size:17px;letter-spacing:-.02em;color:var(--teal-900)}
+.brand .mark{width:32px;height:32px;border-radius:10px;background:var(--teal-700);display:grid;place-items:center;color:#fff;font-size:16px;flex:0 0 32px}
+.nav-item{
+  display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;
+  border:0;background:transparent;color:var(--ink-2);font-weight:600;font-size:14px;text-align:left;width:100%;transition:.13s;
+}
+.nav-item .ic{width:20px;text-align:center;font-size:15px;opacity:.85}
+.nav-item:hover{background:var(--bg)}
+.nav-item.active{background:var(--teal-50);color:var(--teal-700)}
+.nav-item.active .ic{opacity:1}
+.sidebar .spacer{flex:1}
+.user-chip{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--lilac-200);color:var(--lilac-700);display:grid;place-items:center;font-weight:700;font-size:13px;flex:0 0 34px}
+.user-chip .nm{font-size:13px;font-weight:650;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-chip .em{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.icon-btn{border:0;background:transparent;color:var(--muted);padding:6px;border-radius:8px;font-size:15px}
+.icon-btn:hover{background:#fff;color:var(--red)}
+
+.main{padding:26px 30px 90px;max-width:1120px;width:100%}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.topbar h1{font-size:25px;letter-spacing:-.03em}
+.topbar .date{color:var(--muted);font-size:13px;margin-top:3px}
+.topbar .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* reminder banner */
+#reminderZone{display:grid;gap:10px;margin-bottom:18px}
+.reminder{
+  display:flex;gap:12px;align-items:flex-start;padding:13px 15px;border-radius:13px;
+  border:1px solid #f3d9a8;background:var(--amber-bg);color:#6b4a08;
+}
+.reminder.urgent{border-color:#f6cfcd;background:var(--red-bg);color:#8f2626}
+.reminder .ric{font-size:18px;line-height:1.2}
+.reminder .rt{font-weight:700;font-size:13.5px;margin-bottom:2px}
+.reminder .rd{font-size:12.5px;color:#5a3f06}
+.reminder.urgent .rd{color:#7a1f1f}
+.reminder .count{font-variant-numeric:tabular-nums;font-weight:700}
+.reminder .ract{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+
+/* cards */
+.grid{display:grid;gap:16px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.card h3{font-size:14px;font-weight:700;color:var(--ink-2);margin-bottom:2px}
+.card .hint{font-size:12px;color:var(--muted)}
+.stat .label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.stat .val{font-size:27px;font-weight:750;letter-spacing:-.03em;margin-top:6px;line-height:1.1}
+.stat .val small{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:0}
+.stat .sub{font-size:12px;color:var(--muted);margin-top:4px}
+.stat.teal .val{color:var(--teal-700)}
+.stat.lilac .val{color:var(--lilac-700)}
+.stat.green .val{color:var(--green)}
+.stat.red .val{color:var(--red)}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:26px 0 12px;flex-wrap:wrap}
+.section-head h2{font-size:17px;letter-spacing:-.02em}
+.section-head .hint{font-size:12.5px;color:var(--muted)}
+
+/* status pill */
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:700;letter-spacing:.01em}
+.pill.green{background:var(--green-bg);color:#0a6b52}
+.pill.amber{background:var(--amber-bg);color:#8a5c0c}
+.pill.red{background:var(--red-bg);color:#9c2b2b}
+.pill.teal{background:var(--teal-50);color:var(--teal-700)}
+.pill.lilac{background:var(--lilac-100);color:var(--lilac-700)}
+.pill.grey{background:#eef1f0;color:var(--muted)}
+
+/* chart */
+.chart-wrap{position:relative}
+.chart-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:8px}
+.chart-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:middle}
+svg.chart{width:100%;height:auto;display:block;overflow:visible}
+.trend-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:4px 9px;border-radius:999px}
+.trend-badge.up{background:var(--green-bg);color:#0a6b52}
+.trend-badge.down{background:var(--red-bg);color:#9c2b2b}
+.trend-badge.flat{background:#eef1f0;color:var(--muted)}
+
+/* health status */
+.health{display:flex;gap:14px;align-items:flex-start}
+.health .badge{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-size:20px;flex:0 0 44px}
+.health.good .badge{background:var(--green-bg);color:var(--green)}
+.health.warn .badge{background:var(--amber-bg);color:var(--amber)}
+.health.bad .badge{background:var(--red-bg);color:var(--red)}
+.health h4{font-size:15px;margin-bottom:4px}
+.health p{margin:0;font-size:13px;color:var(--ink-2);line-height:1.55}
+
+/* forms */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid .full{grid-column:1/-1}
+.seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:3px}
+.seg button{flex:1;border:0;background:transparent;padding:8px;border-radius:8px;font-weight:650;font-size:13px;color:var(--muted)}
+.seg button.active{background:#fff;color:var(--teal-700);box-shadow:0 1px 3px rgba(16,40,36,.12)}
+.help{font-size:11.5px;color:var(--muted);margin-top:5px}
+.range-hint{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.range-hint span{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
+
+/* reading list */
+.reading{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)}
+.reading:last-child{border-bottom:0}
+.reading .v{font-size:19px;font-weight:750;letter-spacing:-.02em;min-width:96px}
+.reading .v small{font-size:11px;font-weight:600;color:var(--muted);margin-left:3px}
+.reading .meta{flex:1;min-width:0}
+.reading .meta .t{font-size:13px;font-weight:600}
+.reading .meta .n{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reading .del{border:0;background:transparent;color:#b9c4c1;font-size:15px;padding:6px;border-radius:8px}
+.reading .del:hover{color:var(--red);background:var(--red-bg)}
+.empty{text-align:center;padding:34px 16px;color:var(--muted);font-size:13.5px}
+.empty .big{font-size:30px;display:block;margin-bottom:8px;opacity:.5}
+
+/* food */
+.meal-block{margin-bottom:18px}
+.meal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.meal-head .ttl{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14.5px}
+.meal-head .ttl .em{font-size:17px}
+.food-card{display:flex;gap:12px;padding:13px 14px;border:1px solid var(--line);border-radius:13px;background:#fff;margin-bottom:9px;transition:.15s}
+.food-card:hover{border-color:var(--teal-100);background:var(--teal-50)}
+.food-card .num{width:24px;height:24px;border-radius:8px;background:var(--lilac-100);color:var(--lilac-700);display:grid;place-items:center;font-size:11.5px;font-weight:750;flex:0 0 24px;margin-top:1px}
+.food-card .body{min-width:0}
+.food-card .nm{font-weight:650;font-size:13.8px;margin-bottom:3px}
+.food-card .rs{font-size:12.5px;color:#55635f;line-height:1.5}
+.food-card .tags{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
+.food-card .tags span{font-size:10.5px;padding:2px 7px;border-radius:999px;background:var(--teal-50);color:var(--teal-700);font-weight:600}
+
+/* meds */
+.med{display:flex;gap:13px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:13px;margin-bottom:10px;background:#fff}
+.med .mic{width:38px;height:38px;border-radius:11px;background:var(--lilac-100);color:var(--lilac-700);display:grid;place-items:center;font-size:17px;flex:0 0 38px}
+.med .nm{font-weight:700;font-size:14px}
+.med .ds{font-size:12.5px;color:var(--muted);margin-top:2px}
+.med .times{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.med .times span{font-size:11.5px;font-weight:650;padding:3px 8px;border-radius:7px;background:var(--bg);border:1px solid var(--line);color:var(--ink-2);font-variant-numeric:tabular-nums}
+.med .times span.taken{background:var(--green-bg);border-color:#c6ecdd;color:#0a6b52}
+.med .times span.due{background:var(--amber-bg);border-color:#f3d9a8;color:#8a5c0c}
+.med .acts{margin-left:auto;display:flex;gap:6px;align-items:center}
+.dose-row{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;border:1px solid var(--line);margin-bottom:8px;background:#fff}
+.dose-row.due{border-color:#f3d9a8;background:var(--amber-bg)}
+.dose-row.overdue{border-color:#f6cfcd;background:var(--red-bg)}
+.dose-row .dt{font-weight:750;font-size:13.5px;font-variant-numeric:tabular-nums;min-width:52px}
+.dose-row .dn{flex:1;min-width:0;font-size:13px}
+.dose-row .dn small{display:block;color:var(--muted);font-size:11.5px}
+
+/* modal */
+.modal-back{position:fixed;inset:0;background:rgba(11,35,32,.45);display:none;align-items:center;justify-content:center;padding:18px;z-index:80;backdrop-filter:blur(2px)}
+.modal-back.on{display:flex}
+.modal{background:#fff;border-radius:20px;max-width:460px;width:100%;padding:24px;box-shadow:0 24px 60px -20px rgba(11,35,32,.5);max-height:90vh;overflow:auto}
+.modal h3{font-size:18px;margin-bottom:6px}
+.modal p{font-size:13.5px;color:var(--ink-2);line-height:1.6;margin:0 0 14px}
+.modal .acts{display:flex;gap:9px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.alert-modal{border-top:5px solid var(--red)}
+.alert-modal .big-val{font-size:38px;font-weight:800;letter-spacing:-.04em;color:var(--red);line-height:1.1;margin:6px 0 2px}
+.alert-modal .big-val small{font-size:15px;font-weight:600;color:var(--muted)}
+.alert-modal .why{background:var(--red-bg);border:1px solid #f6cfcd;border-radius:12px;padding:12px 14px;font-size:13px;color:#8f2626;line-height:1.55;margin:12px 0}
+.alert-modal .steps{font-size:12.5px;color:var(--ink-2);padding-left:18px;margin:10px 0 0}
+.alert-modal .steps li{margin-bottom:5px}
+
+/* toast */
+#toasts{position:fixed;bottom:20px;right:20px;display:grid;gap:9px;z-index:120;max-width:340px}
+.toast{background:var(--teal-900);color:#eafaf7;padding:12px 15px;border-radius:12px;font-size:13px;box-shadow:0 12px 30px -10px rgba(11,35,32,.6);animation:tin .25s ease}
+.toast.warn{background:#7a4f06}
+.toast.err{background:#8f2626}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* bottom nav (mobile) */
+.bottom-nav{display:none}
+
+/* disclaimer */
+.disclaimer{font-size:11.5px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);margin-top:30px;padding-top:14px}
+.disclaimer b{color:var(--ink-2)}
+
+@media (max-width:980px){
+  .g4{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:1fr}
+  .auth-wrap{grid-template-columns:1fr}
+  .auth-side{display:none}
+}
+@media (max-width:820px){
+  .shell{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .main{padding:18px 15px 96px}
+  .g2{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .topbar h1{font-size:21px}
+  .bottom-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.97);
+    border-top:1px solid var(--line);padding:7px 4px calc(7px + env(safe-area-inset-bottom));
+    z-index:60;backdrop-filter:blur(8px);
+  }
+  .bottom-nav button{
+    flex:1;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:6px 2px;color:var(--muted);font-size:10px;font-weight:650;border-radius:10px;
+  }
+  .bottom-nav button .ic{font-size:17px;line-height:1}
+  .bottom-nav button.active{color:var(--teal-700);background:var(--teal-50)}
+  .stat .val{font-size:23px}
+  #toasts{left:14px;right:14px;bottom:86px;max-width:none}
+  .reminder{flex-wrap:wrap}
+  .reminder .ract{margin-left:0;width:100%}
+}
+@media (max-width:420px){
+  .g4{grid-template-columns:1fr 1fr}
+  .auth-main{padding:28px 20px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH ============ -->
+<div id="authScreen">
+  <div class="auth-wrap">
+    <div class="auth-side">
+      <div>
+        <div class="brand"><span class="mark">✚</span> GlucoCare</div>
+        <h2>Your daily diabetes companion.</h2>
+        <p>Log every reading, keep medications on time, and see your care trend in one calm place.</p>
+        <ul>
+          <li><span class="dot">✓</span> Instant low / high alerts with clear next steps</li>
+          <li><span class="dot">✓</span> Diabetic-friendly meal ideas, refreshed daily</li>
+          <li><span class="dot">✓</span> Medication and check-in reminders</li>
+          <li><span class="dot">✓</span> Private — everything stays on this device</li>
+        </ul>
+      </div>
+      <div class="foot">Not a substitute for professional medical advice, diagnosis or treatment. Always consult your diabetes care team.</div>
+    </div>
+    <div class="auth-main">
+      <h1 id="authTitle">Welcome back</h1>
+      <p class="sub" id="authSub">Sign in to see your readings and today's plan.</p>
+      <div class="tabs">
+        <button id="tabLogin" class="active" type="button">Sign in</button>
+        <button id="tabSignup" type="button">Create account</button>
+      </div>
+      <div class="auth-msg" id="authMsg"></div>
+      <form id="authForm" autocomplete="on">
+        <div class="field" id="nameField" style="display:none">
+          <label for="fName">Your name</label>
+          <input id="fName" type="text" placeholder="e.g. Priya Sharma" autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="fEmail">Email</label>
+          <input id="fEmail" type="email" placeholder="you@example.com" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="fPass">Password</label>
+          <input id="fPass" type="password" placeholder="At least 6 characters" autocomplete="current-password" required>
+        </div>
+        <button class="btn block" id="authSubmit" type="submit">Sign in</button>
+      </form>
+      <div class="demo-box">
+        <b>Try the demo account</b> — pre-loaded with sample readings so the dashboard and chart are populated.
+        <div class="row">
+          <span><code>demo@glucocare.app</code> · <code>demo1234</code></span>
+          <button class="btn small lilac" id="demoBtn" type="button">Open demo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="mark">✚</span> GlucoCare</div>
+      <button class="nav-item active" data-page="dashboard"><span class="ic">◧</span> Dashboard</button>
+      <button class="nav-item" data-page="log"><span class="ic">＋</span> Log Reading</button>
+      <button class="nav-item" data-page="food"><span class="ic">◍</span> Food</button>
+      <button class="nav-item" data-page="meds"><span class="ic">℞</span> Medications</button>
+      <button class="nav-item" data-page="history"><span class="ic">≡</span> History</button>
+      <div class="spacer"></div>
+      <div class="user-chip">
+        <div class="avatar" id="userAvatar">U</div>
+        <div style="min-width:0;flex:1">
+          <div class="nm" id="userName">User</div>
+          <div class="em" id="userEmail">user@example.com</div>
+        </div>
+        <button class="icon-btn" id="logoutBtn" title="Sign out" aria-label="Sign out">⏻</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div id="reminderZone"></div>
+
+      <!-- DASHBOARD -->
+      <section id="page-dashboard">
+        <div class="topbar">
+          <div>
+            <h1 id="greeting">Good morning</h1>
+            <div class="date" id="todayLabel"></div>
+          </div>
+          <div class="actions">
+            <button class="btn ghost small" id="notifBtn" type="button">🔔 Enable reminders</button>
+            <button class="btn small" data-goto="log" type="button">＋ Log reading</button>
+          </div>
+        </div>
+
+        <div class="grid g4" id="statGrid"></div>
+
+        <div class="section-head">
+          <h2>Care progress</h2>
+          <span class="hint">Last 14 days · logging, in-range readings &amp; medication</span>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+            <div>
+              <h3>Care score</h3>
+              <div class="hint" id="chartCaption">Higher is better — 100 means every reading in range, logged on time, every dose taken.</div>
+            </div>
+            <div id="trendBadge"></div>
+          </div>
+          <div class="chart-wrap" id="chartWrap"></div>
+          <div class="chart-legend">
+            <span><i style="background:#0f9d76"></i>Doing well (70–100)</span>
+            <span><i style="background:#c98a1c"></i>Needs attention (40–69)</span>
+            <span><i style="background:#cf3f3f"></i>Doing badly (0–39)</span>
+          </div>
+        </div>
+
+        <div class="grid g2" style="margin-top:16px">
+          <div class="card" id="healthCard"></div>
+          <div class="card">
+            <h3>Today's plan</h3>
+            <div class="hint" style="margin-bottom:12px">What still needs doing before the day is out.</div>
+            <div id="todayPlan"></div>
+          </div>
+        </div>
+
+        <div class="section-head">
+          <h2>Latest readings</h2>
+          <button class="btn ghost small" data-goto="history" type="button">View all</button>
+        </div>
+        <div class="card" id="latestReadings"></div>
+
+        <div class="disclaimer">
+          <b>Medical disclaimer:</b> GlucoCare is a personal tracking tool, not a medical device. It does not diagnose, treat or replace professional medical advice. Target ranges shown are general adult guidelines — your own targets may differ. Always follow your doctor's instructions, and in an emergency call your local emergency number.
+        </div>
+      </section>
+
+      <!-- LOG -->
+      <section id="page-log" class="hidden">
+        <div class="topbar">
+          <div>
+            <h1>Log a blood sugar reading</h1>
+            <div class="date">Enter every reading you take — the more complete, the better your trend.</div>
+          </div>
+        </div>
+        <div class="grid g2" style="align-items:start">
+          <div class="card">
+            <form id="logForm">
+              <div class="form-grid">
+                <div class="field full">
+                  <label for="rValue">Reading value</label>
+                  <input id="rValue" type="number" step="0.1" min="0" placeholder="e.g. 118" required>
+                  <div class="range-hint" id="rangeHint"></div>
+                </div>
+                <div class="field">
+                  <label>Unit</label>
+                  <div class="seg" id="unitSeg">
+                    <button type="button" class="active" data-unit="mg/dL">mg/dL</button>
+                    <button type="button" data-unit="mmol/L">mmol/L</button>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="rWhen">When</label>
+                  <input id="rWhen" type="datetime-local" required>
+                </div>
+                <div class="field full">
+                  <label for="rNote">Note <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+                  <input id="rNote" type="text" placeholder="e.g. before breakfast, felt shaky, after a walk">
+                </div>
+                <div class="field full">
+                  <label for="rPhoto">Meter photo <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+                  <input id="rPhoto" type="file" accept="image/*" style="padding:8px;font-size:12.5px">
+                  <div class="help">Attach a photo of your meter or CGM screen for your own records. Stored on this device only.</div>
+                </div>
+              </div>
+              <button class="btn block" type="submit" style="margin-top:6px">Save reading</button>
+            </form>
+          </div>
+          <div class="card">
+            <h3>How readings are classified</h3>
+            <div class="hint" style="margin-bottom:12px">General adult targets. Your doctor may set different ones.</div>
+            <div id="classTable"></div>
+            <div class="help" style="margin-top:12px">Very high (above 250 mg/dL / 13.9 mmol/L) or dangerously low (below 54 mg/dL / 3.0 mmol/L) readings trigger an immediate alert to contact your diabetes doctor.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FOOD -->
+      <section id="page-food" class="hidden">
+        <div class="topbar">
+          <div>
+            <h1>Food ideas</h1>
+            <div class="date">Diabetic-friendly meals with a short reason for each. Refresh for alternatives.</div>
+          </div>
+          <div class="actions">
+            <button class="btn small" id="refreshFood" type="button">↻ New suggestions</button>
+          </div>
+        </div>
+        <div id="foodWrap"></div>
+        <div class="disclaimer">
+          <b>Note:</b> These are general suggestions, not a prescribed meal plan. Portion sizes, carbohydrate counts and medication timing should be set with your dietitian or diabetes doctor.
+        </div>
+      </section>
+
+      <!-- MEDS -->
+      <section id="page-meds" class="hidden">
+        <div class="topbar">
+          <div>
+            <h1>Medications</h1>
+            <div class="date">Add each medication with its dose and times. Reminders appear while the app is open.</div>
+          </div>
+          <div class="actions">
+            <button class="btn ghost small" id="notifBtn2" type="button">🔔 Enable reminders</button>
+            <button class="btn small" id="addMedBtn" type="button">＋ Add medication</button>
+          </div>
+        </div>
+
+        <div class="section-head" style="margin-top:0">
+          <h2>Due now</h2>
+          <span class="hint" id="dueHint"></span>
+        </div>
+        <div class="card" id="dueList"></div>
+
+        <div class="section-head">
+          <h2>Your medications</h2>
+          <span class="hint" id="medCount"></span>
+        </div>
+        <div id="medList"></div>
+
+        <div class="section-head">
+          <h2>Check-in schedule</h2>
+        </div>
+        <div class="card">
+          <div class="form-grid">
+            <div class="field">
+              <label for="intervalHours">A reading is due every</label>
+              <select id="intervalHours">
+                <option value="2">2 hours</option>
+                <option value="3">3 hours</option>
+                <option value="4">4 hours</option>
+                <option value="6">6 hours</option>
+                <option value="8">8 hours</option>
+                <option value="12">12 hours</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="reminderMin">Repeat reminder every</label>
+              <select id="reminderMin">
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60">60 minutes</option>
+              </select>
+            </div>
+          </div>
+          <div class="help">If no reading is logged when one is due, GlucoCare reminds you repeatedly until you log one. Reminders stop the moment a reading is saved.</div>
+        </div>
+      </section>
+
+      <!-- HISTORY -->
+      <section id="page-history" class="hidden">
+        <div class="topbar">
+          <div>
+            <h1>Reading history</h1>
+            <div class="date" id="historyCount"></div>
+          </div>
+          <div class="actions">
+            <select id="histFilter" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#fff">
+              <option value="all">All readings</option>
+              <option value="normal">In range only</option>
+              <option value="high">High &amp; very high</option>
+              <option value="low">Low readings</option>
+            </select>
+            <button class="btn ghost small" id="exportBtn" type="button">Export JSON</button>
+          </div>
+        </div>
+        <div class="card" id="historyList"></div>
+        <div class="disclaimer">
+          <b>Medical disclaimer:</b> This history is for your own tracking and to share with your care team. It is not a diagnosis. Discuss any pattern of highs or lows with your diabetes doctor.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="active" data-page="dashboard"><span class="ic">◧</span>Dashboard</button>
+    <button data-page="log"><span class="ic">＋</span>Log</button>
+    <button data-page="food"><span class="ic">◍</span>Food</button>
+    <button data-page="meds"><span class="ic">℞</span>Meds</button>
+    <button data-page="history"><span class="ic">≡</span>History</button>
+  </nav>
+</div>
+
+<!-- urgent alert modal -->
+<div class="modal-back" id="alertBack">
+  <div class="modal alert-modal">
+    <h3 id="alertTitle">⚠️ Contact your diabetes doctor</h3>
+    <div class="big-val" id="alertVal">—</div>
+    <div class="why" id="alertWhy"></div>
+    <p style="margin:0;font-size:13px" id="alertAdvice"></p>
+    <ul class="steps" id="alertSteps"></ul>
+    <div class="acts">
+      <button class="btn ghost" id="alertDismiss" type="button">I understand</button>
+      <button class="btn danger" id="alertAck" type="button">Got it — I'll contact my doctor</button>
+    </div>
+  </div>
+</div>
+
+<!-- generic modal -->
+<div class="modal-back" id="modalBack">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+"use strict";
+/* =========================================================
+   GlucoCare — local-first diabetes management SPA
+   All data lives in localStorage. Passwords are salted+PBKDF2.
+   ========================================================= */
+
+const DB_KEY = "glucocare.v1";
+const SESSION_KEY = "glucocare.session";
+const DATA_PREFIX = "glucocare.data.";
+
+/* ---------- storage ---------- */
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if(!raw) return {users:[]};
+    const db = JSON.parse(raw);
+    if(!db || !Array.isArray(db.users)) return {users:[]};
+    return db;
+  }catch(e){ return {users:[]}; }
+}
+function saveDB(db){ localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+
+function defaultData(){
+  return {
+    readings: [],
+    meds: [],
+    doses: {},
+    settings: { intervalHours: 4, reminderMin: 30, unit: "mg/dL" },
+    createdAt: Date.now()
+  };
+}
+function loadData(uid){
+  try{
+    const raw = localStorage.getItem(DATA_PREFIX + uid);
+    if(!raw) return defaultData();
+    const d = JSON.parse(raw);
+    return Object.assign(defaultData(), d, {settings: Object.assign(defaultData().settings, d.settings||{})});
+  }catch(e){ return defaultData(); }
+}
+function saveData(){
+  if(!state.user) return;
+  localStorage.setItem(DATA_PREFIX + state.user.id, JSON.stringify(state.data));
+}
+
+/* ---------- crypto ---------- */
+function randomSalt(){
+  const a = new Uint8Array(16);
+  if(window.crypto && crypto.getRandomValues) crypto.getRandomValues(a);
+  else for(let i=0;i<16;i++) a[i] = Math.floor(Math.random()*256);
+  return Array.from(a).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+async function hashPassword(pw, salt){
+  const enc = new TextEncoder();
+  if(window.crypto && crypto.subtle && crypto.subtle.importKey){
+    try{
+      const key = await crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveBits"]);
+      const bits = await crypto.subtle.deriveBits(
+        {name:"PBKDF2", salt: enc.encode(salt), iterations: 120000, hash:"SHA-256"}, key, 256
+      );
+      return Array.from(new Uint8Array(bits)).map(b=>b.toString(16).padStart(2,"0")).join("");
+    }catch(e){ /* fall through */ }
+  }
+  // Fallback for non-secure contexts (e.g. file://)
+  let h1 = 0x811c9dc5, h2 = 0x1000193;
+  const s = salt + "|" + pw;
+  for(let i=0;i<s.length;i++){
+    h1 ^= s.charCodeAt(i); h1 = Math.imul(h1, 16777619) >>> 0;
+    h2 = (Math.imul(h2 ^ s.charCodeAt(i), 2246822519) + i) >>> 0;
+  }
+  return "fb" + h1.toString(16).padStart(8,"0") + h2.toString(16).padStart(8,"0");
+}
+
+/* ---------- helpers ---------- */
+const $ = (s, r) => (r||document).querySelector(s);
+const $$ = (s, r) => Array.from((r||document).querySelectorAll(s));
+const pad = n => String(n).padStart(2,"0");
+function dateKey(d){
+  const x = (d instanceof Date) ? d : new Date(d);
+  return x.getFullYear() + "-" + pad(x.getMonth()+1) + "-" + pad(x.getDate());
+}
+function startOfDay(d){ const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function fmtTime(ts){
+  const d = new Date(ts);
+  return pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+function fmtDate(ts){
+  const d = new Date(ts);
+  return d.toLocaleDateString(undefined, {weekday:"short", day:"numeric", month:"short"});
+}
+function fmtDateTime(ts){
+  return fmtDate(ts) + " · " + fmtTime(ts);
+}
+function relTime(ts){
+  const diff = Date.now() - ts;
+  const m = Math.round(diff/60000);
+  if(m < 1) return "just now";
+  if(m < 60) return m + " min ago";
+  const h = Math.round(m/60);
+  if(h < 24) return h + " h ago";
+  const d = Math.round(h/24);
+  return d + " d ago";
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function esc(s){
+  return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function toast(msg, kind){
+  const el = document.createElement("div");
+  el.className = "toast" + (kind ? " " + kind : "");
+  el.textContent = msg;
+  $("#toasts").appendChild(el);
+  setTimeout(()=>{ el.style.opacity = "0"; el.style.transition = "opacity .3s"; }, 3600);
+  setTimeout(()=>{ el.remove(); }, 4000);
+}
+
+/* ---------- classification ---------- */
+const MGDL_PER_MMOL = 18.0182;
+function toMgdl(value, unit){ return unit === "mmol/L" ? value * MGDL_PER_MMOL : value; }
+function fromMgdl(mgdl, unit){ return unit === "mmol/L" ? mgdl / MGDL_PER_MMOL : mgdl; }
+
+function classify(mgdl){
+  if(mgdl < 54){
+    return {
+      key:"critical-low", label:"Dangerously low", tone:"red", urgent:true,
+      reason:"A reading below 54 mg/dL (3.0 mmol/L) is severe hypoglycemia — it can cause confusion, seizures or loss of consciousness. This needs medical attention now."
+    };
+  }
+  if(mgdl < 70){
+    return {
+      key:"low", label:"Low", tone:"amber", urgent:false,
+      reason:"Below 70 mg/dL (3.9 mmol/L) is hypoglycemia. Treat with 15 g of fast-acting carbohydrate, then recheck in 15 minutes."
+    };
+  }
+  if(mgdl <= 140){
+    return {
+      key:"normal", label:"In range", tone:"green", urgent:false,
+      reason:"Within the general target range of 70–140 mg/dL (3.9–7.8 mmol/L)."
+    };
+  }
+  if(mgdl <= 250){
+    return {
+      key:"high", label:"High", tone:"amber", urgent:false,
+      reason:"Above 140 mg/dL (7.8 mmol/L) is above target. Repeated highs over time damage nerves, kidneys, eyes and blood vessels."
+    };
+  }
+  return {
+    key:"very-high", label:"Very high", tone:"red", urgent:true,
+    reason:"Above 250 mg/dL (13.9 mmol/L) is very high — it raises the risk of hyperglycemia complications including diabetic ketoacidosis, which can become an emergency."
+  };
+}
+function toneClass(t){ return t === "green" ? "green" : t === "amber" ? "amber" : "red"; }
+
+/* ---------- state ---------- */
+const state = {
+  user: null,
+  data: null,
+  page: "dashboard",
+  unit: "mg/dL",
+  foodSeed: Math.floor(Math.random()*1000),
+  lastReminderFired: 0,
+  lastMedFired: {},
+  pendingPhoto: null
+};
+
+/* =========================================================
+   AUTH
+   ========================================================= */
+let authMode = "login";
+
+function setAuthMode(mode){
+  authMode = mode;
+  $("#tabLogin").classList.toggle("active", mode === "login");
+  $("#tabSignup").classList.toggle("active", mode === "signup");
+  $("#nameField").style.display = mode === "signup" ? "block" : "none";
+  $("#authTitle").textContent = mode === "signup" ? "Create your account" : "Welcome back";
+  $("#authSub").textContent = mode === "signup"
+    ? "Your readings stay private on this device."
+    : "Sign in to see your readings and today's plan.";
+  $("#authSubmit").textContent = mode === "signup" ? "Create account" : "Sign in";
+  $("#fPass").setAttribute("autocomplete", mode === "signup" ? "new-password" : "current-password");
+  authMsg("");
+}
+function authMsg(text, kind){
+  const el = $("#authMsg");
+  el.className = "auth-msg" + (text ? " " + (kind||"err") : "");
+  el.textContent = text || "";
+}
+
+async function handleAuth(e){
+  e.preventDefault();
+  const email = $("#fEmail").value.trim().toLowerCase();
+  const pass = $("#fPass").value;
+  const name = $("#fName").value.trim();
+  if(!email || !pass){ authMsg("Please enter your email and password."); return; }
+  if(pass.length < 6){ authMsg("Password must be at least 6 characters."); return; }
+
+  const db = loadDB();
+  const btn = $("#authSubmit");
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = "Please wait…";
+
+  try{
+    if(authMode === "signup"){
+      if(db.users.some(u => u.email === email)){
+        authMsg("An account with that email already exists. Try signing in.");
+        return;
+      }
+      const salt = randomSalt();
+      const hash = await hashPassword(pass, salt);
+      const user = { id: uid(), name: name || email.split("@")[0], email, salt, hash, createdAt: Date.now() };
+      db.users.push(user);
+      saveDB(db);
+      localStorage.setItem(DATA_PREFIX + user.id, JSON.stringify(defaultData()));
+      startSession(user);
+      toast("Account created — welcome to GlucoCare");
+    }else{
+      const user = db.users.find(u => u.email === email);
+      if(!user){ authMsg("No account found with that email. Create one first."); return; }
+      const hash = await hashPassword(pass, user.salt);
+      if(hash !== user.hash){ authMsg("Incorrect password. Please try again."); return; }
+      startSession(user);
+    }
+  }catch(err){
+    authMsg("Something went wrong. Please try again.");
+  }finally{
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+function startSession(user){
+  localStorage.setItem(SESSION_KEY, user.id);
+  state.user = user;
+  state.data = loadData(user.id);
+  state.unit = state.data.settings.unit || "mg/dL";
+  enterApp();
+}
+
+function enterApp(){
+  $("#authScreen").style.display = "none";
+  $("#app").classList.add("on");
+  const initials = (state.user.name || "U").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase();
+  $("#userAvatar").textContent = initials || "U";
+  $("#userName").textContent = state.user.name;
+  $("#userEmail").textContent = state.user.email;
+  $("#intervalHours").value = String(state.data.settings.intervalHours);
+  $("#reminderMin").value = String(state.data.settings.reminderMin);
+  setUnit(state.unit, false);
+  go("dashboard");
+  startTicker();
+}
+
+function logout(){
+  localStorage.removeItem(SESSION_KEY);
+  state.user = null; state.data = null;
+  $("#app").classList.remove("on");
+  $("#authScreen").style.display = "flex";
+  $("#fPass").value = "";
+  setAuthMode("login");
+  authMsg("You have been signed out.", "ok");
+}
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+function go(page){
+  state.page = page;
+  ["dashboard","log","food","meds","history"].forEach(p=>{
+    const el = $("#page-" + p);
+    if(el) el.classList.toggle("hidden", p !== page);
+  });
+  $$(".nav-item, .bottom-nav button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.page === page);
+  });
+  window.scrollTo({top:0, behavior:"instant"});
+  if(page === "dashboard") renderDashboard();
+  if(page === "log") renderLogPage();
+  if(page === "food") renderFood();
+  if(page === "meds") renderMeds();
+  if(page === "history") renderHistory();
+}
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+function readingsSorted(){
+  return state.data.readings.slice().sort((a,b)=>b.ts - a.ts);
+}
+function readingsInLastDays(days){
+  const from = startOfDay(new Date()).getTime() - (days-1)*86400000;
+  return state.data.readings.filter(r => r.ts >= from);
+}
+function currentStreak(){
+  const keys = new Set(state.data.readings.map(r => dateKey(r.ts)));
+  let streak = 0;
+  const d = startOfDay(new Date());
+  if(!keys.has(dateKey(d))) d.setDate(d.getDate()-1);
+  while(keys.has(dateKey(d))){ streak++; d.setDate(d.getDate()-1); }
+  return streak;
+}
+function adherenceForDay(key, onlyPast){
+  const sched = [];
+  state.data.meds.forEach(m => (m.times||[]).forEach(t => sched.push({medId:m.id, time:t})));
+  if(!sched.length) return null;
+  const now = new Date();
+  const isToday = key === dateKey(now);
+  let total = 0, taken = 0;
+  sched.forEach(s=>{
+    if(onlyPast && isToday){
+      const [h,mi] = s.time.split(":").map(Number);
+      const t = new Date(); t.setHours(h, mi, 0, 0);
+      if(t.getTime() > now.getTime()) return;
+    }
+    total++;
+    const rec = state.data.doses[s.medId] && state.data.doses[s.medId][key];
+    if(rec && rec[s.time]) taken++;
+  });
+  if(!total) return null;
+  return taken/total;
+}
+function adherenceLastDays(days){
+  let total = 0, taken = 0;
+  for(let i=0;i<days;i++){
+    const d = startOfDay(new Date()); d.setDate(d.getDate()-i);
+    const key = dateKey(d);
+    const sched = [];
+    state.data.meds.forEach(m => (m.times||[]).forEach(t => sched.push({medId:m.id, time:t})));
+    const isToday = i === 0;
+    sched.forEach(s=>{
+      if(isToday){
+        const [h,mi] = s.time.split(":").map(Number);
+        const t = new Date(); t.setHours(h,mi,0,0);
+        if(t.getTime() > Date.now()) return;
+      }
+      total++;
+      const rec = state.data.doses[s.medId] && state.data.doses[s.medId][key];
+      if(rec && rec[s.time]) taken++;
+    });
+  }
+  if(!total) return null;
+  return taken/total;
+}
+
+function careScores(days){
+  const out = [];
+  for(let i=days-1;i>=0;i--){
+    const d = startOfDay(new Date()); d.setDate(d.getDate()-i);
+    const key = dateKey(d);
+    const dayReadings = state.data.readings.filter(r => dateKey(r.ts) === key);
+    const inRange = dayReadings.filter(r => classify(r.mgdl).key === "normal").length;
+    const adh = adherenceForDay(key, true);
+    const isToday = i === 0;
+    if(isToday && dayReadings.length === 0){
+      out.push({key, date:d, score:null, count:0, inRange:0, isToday:true});
+      continue;
+    }
+    if(dayReadings.length === 0 && adh === null){
+      out.push({key, date:d, score:0, count:0, inRange:0, isToday});
+      continue;
+    }
+    const logged = dayReadings.length > 0 ? 1 : 0;
+    const rangeScore = dayReadings.length ? inRange/dayReadings.length : 0;
+    let score = logged*100*0.35 + rangeScore*100*0.45;
+    score += (adh === null ? logged*100 : adh*100) * 0.20;
+    out.push({key, date:d, score:Math.round(score), count:dayReadings.length, inRange, isToday});
+  }
+  return out;
+}
+
+function renderChart(scores){
+  const pts = scores.filter(s => s.score !== null);
+  const W = 620, H = 210, padL = 34, padR = 12, padT = 14, padB = 26;
+  const innerW = W - padL - padR, innerH = H - padT - padB;
+  if(!pts.length){
+    $("#chartWrap").innerHTML = '<div class="empty"><span class="big">◔</span>No data yet — log a reading to start your care trend.</div>';
+    return;
+  }
+  const n = pts.length;
+  const x = i => padL + (n === 1 ? innerW/2 : (i * innerW/(n-1)));
+  const y = v => padT + innerH - (Math.max(0, Math.min(100, v))/100) * innerH;
+
+  let grid = "";
+  [0,25,50,75,100].forEach(v=>{
+    const yy = y(v);
+    grid += '<line x1="'+padL+'" y1="'+yy+'" x2="'+(W-padR)+'" y2="'+yy+'" stroke="#eef2f1" stroke-width="1"/>';
+    grid += '<text x="'+(padL-7)+'" y="'+(yy+3.5)+'" text-anchor="end" font-size="9.5" fill="#9aa8a5">'+v+'</text>';
+  });
+
+  let segs = "";
+  for(let i=0;i<n-1;i++){
+    const a = pts[i], b = pts[i+1];
+    const avg = (a.score + b.score)/2;
+    const col = avg >= 70 ? "#0f9d76" : avg >= 40 ? "#c98a1c" : "#cf3f3f";
+    segs += '<line x1="'+x(i)+'" y1="'+y(a.score)+'" x2="'+x(i+1)+'" y2="'+y(b.score)+'" stroke="'+col+'" stroke-width="2.6" stroke-linecap="round"/>';
+  }
+
+  const last = pts[n-1];
+  const lastCol = last.score >= 70 ? "#0f9d76" : last.score >= 40 ? "#c98a1c" : "#cf3f3f";
+  let area = "M " + x(0) + " " + y(pts[0].score);
+  for(let i=1;i<n;i++) area += " L " + x(i) + " " + y(pts[i].score);
+  area += " L " + x(n-1) + " " + (padT+innerH) + " L " + x(0) + " " + (padT+innerH) + " Z";
+
+  let dots = "";
+  pts.forEach((p,i)=>{
+    const col = p.score >= 70 ? "#0f9d76" : p.score >= 40 ? "#c98a1c" : "#cf3f3f";
+    dots += '<circle cx="'+x(i)+'" cy="'+y(p.score)+'" r="'+(i===n-1?4.6:3)+'" fill="#fff" stroke="'+col+'" stroke-width="2.2"/>';
+  });
+
+  let labels = "";
+  const step = Math.max(1, Math.ceil(n/7));
+  pts.forEach((p,i)=>{
+    if(i % step !== 0 && i !== n-1) return;
+    const lbl = p.date.toLocaleDateString(undefined,{day:"numeric",month:"short"});
+    labels += '<text x="'+x(i)+'" y="'+(H-8)+'" text-anchor="middle" font-size="9.5" fill="#9aa8a5">'+lbl+'</text>';
+  });
+
+  const svg = '<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Care score trend over the last '+n+' days">'
+    + grid
+    + '<path d="'+area+'" fill="'+lastCol+'" opacity="0.08"/>'
+    + segs + dots + labels
+    + '<text x="'+x(n-1)+'" y="'+(y(last.score)-11)+'" text-anchor="middle" font-size="11" font-weight="700" fill="'+lastCol+'">'+last.score+'</text>'
+    + '</svg>';
+  $("#chartWrap").innerHTML = svg;
+}
+
+function renderDashboard(){
+  const now = new Date();
+  const h = now.getHours();
+  const greet = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+  $("#greeting").textContent = greet + ", " + (state.user.name || "").split(" ")[0];
+  $("#todayLabel").textContent = now.toLocaleDateString(undefined,{weekday:"long", day:"numeric", month:"long", year:"numeric"});
+
+  const last7 = readingsInLastDays(7);
+  const inRange7 = last7.filter(r => classify(r.mgdl).key === "normal").length;
+  const pctInRange = last7.length ? Math.round(inRange7/last7.length*100) : 0;
+  const todayReadings = state.data.readings.filter(r => dateKey(r.ts) === dateKey(now));
+  const adh = adherenceLastDays(7);
+  const streak = currentStreak();
+
+  const stats = [
+    {cls:"teal", label:"Readings in range", val: last7.length ? pctInRange + "<small>%</small>" : "—", sub: last7.length ? inRange7 + " of " + last7.length + " in the last 7 days" : "No readings yet"},
+    {cls:"lilac", label:"Checks logged today", val: String(todayReadings.length), sub: todayReadings.length ? "Last at " + fmtTime(todayReadings[0].ts) : "Nothing logged yet today"},
+    {cls:"green", label:"Medication adherence", val: adh === null ? "—" : Math.round(adh*100) + "<small>%</small>", sub: adh === null ? "No medications added" : "Doses taken, last 7 days"},
+    {cls: streak >= 3 ? "green" : "teal", label:"Current streak", val: streak + "<small> d</small>", sub: streak ? "Consecutive days with a reading" : "Log today to start a streak"}
+  ];
+  $("#statGrid").innerHTML = stats.map(s =>
+    '<div class="card stat '+s.cls+'"><div class="label">'+s.label+'</div><div class="val">'+s.val+'</div><div class="sub">'+s.sub+'</div></div>'
+  ).join("");
+
+  const scores = careScores(14);
+  renderChart(scores);
+
+  const valid = scores.filter(s => s.score !== null);
+  const recent = valid.slice(-3), prev = valid.slice(-6,-3);
+  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b.score,0)/arr.length : null;
+  const rAvg = avg(recent), pAvg = avg(prev);
+  let trendHtml = "";
+  if(rAvg !== null && pAvg !== null){
+    const diff = rAvg - pAvg;
+    if(diff > 4) trendHtml = '<span class="trend-badge up">▲ Improving +'+Math.round(diff)+'</span>';
+    else if(diff < -4) trendHtml = '<span class="trend-badge down">▼ Slipping '+Math.round(diff)+'</span>';
+    else trendHtml = '<span class="trend-badge flat">→ Steady</span>';
+  }else if(rAvg !== null){
+    trendHtml = '<span class="trend-badge flat">→ ' + Math.round(rAvg) + ' avg</span>';
+  }
+  $("#trendBadge").innerHTML = trendHtml;
+
+  renderHealthCard();
+  renderTodayPlan();
+  renderLatestReadings();
+}
+
+function renderHealthCard(){
+  const last7 = readingsInLastDays(7);
+  const el = $("#healthCard");
+  if(!last7.length){
+    el.innerHTML = '<h3>Health status</h3><div class="health warn" style="margin-top:12px"><div class="badge">◔</div><div><h4>Not enough data yet</h4><p>Log a few readings over the next days and GlucoCare will tell you how you are doing in plain language.</p></div></div>';
+    return;
+  }
+  const counts = {normal:0, low:0, high:0, "very-high":0, "critical-low":0};
+  last7.forEach(r => counts[classify(r.mgdl).key]++);
+  const total = last7.length;
+  const inRange = counts.normal;
+  const pct = Math.round(inRange/total*100);
+  const urgent = counts["very-high"] + counts["critical-low"];
+  const outOfRange = total - inRange;
+
+  let cls, icon, title, text;
+  if(urgent > 0){
+    cls = "bad"; icon = "!";
+    title = "Needs medical attention";
+    text = "You had " + urgent + " reading" + (urgent>1?"s":"") + " in the danger zone in the last 7 days (" + (counts["very-high"] ? counts["very-high"] + " very high" : "") + (counts["very-high"] && counts["critical-low"] ? ", " : "") + (counts["critical-low"] ? counts["critical-low"] + " dangerously low" : "") + "). Please contact your diabetes doctor about these readings rather than adjusting anything yourself.";
+  }else if(pct >= 70 && counts.low === 0){
+    cls = "good"; icon = "✓";
+    title = "You're doing well";
+    text = pct + "% of your last " + total + " readings were in range, with no lows. Keep logging at the same times each day and keep taking your medication as prescribed — that consistency is what keeps this stable.";
+  }else if(pct >= 50){
+    cls = "warn"; icon = "~";
+    title = "Mostly on track, with some swings";
+    text = pct + "% of your last " + total + " readings were in range. " + (counts.high ? counts.high + " were high" : "") + (counts.high && counts.low ? " and " : "") + (counts.low ? counts.low + " were low" : "") + ". That pattern is worth mentioning at your next visit — it often points to meal timing, portion size or medication timing.";
+  }else{
+    cls = "bad"; icon = "!";
+    title = "Not well controlled right now";
+    text = "Only " + pct + "% of your last " + total + " readings were in range, and " + outOfRange + " were outside it. This level of variation is hard on your body. Please book time with your diabetes doctor to review your plan rather than changing doses on your own.";
+  }
+  el.innerHTML = '<h3>Health status</h3><div class="health '+cls+'" style="margin-top:12px"><div class="badge">'+icon+'</div><div><h4>'+title+'</h4><p>'+text+'</p></div></div>';
+}
+
+function renderTodayPlan(){
+  const now = new Date();
+  const key = dateKey(now);
+  const todayReadings = state.data.readings.filter(r => dateKey(r.ts) === key);
+  const items = [];
+
+  items.push({
+    done: todayReadings.length > 0,
+    text: todayReadings.length ? "Logged " + todayReadings.length + " reading" + (todayReadings.length>1?"s":"") + " today" : "Log your first blood sugar reading today"
+  });
+
+  const sched = [];
+  state.data.meds.forEach(m => (m.times||[]).forEach(t => sched.push({med:m, time:t})));
+  sched.sort((a,b)=>a.time.localeCompare(b.time));
+  const pending = sched.filter(s=>{
+    const rec = state.data.doses[s.med.id] && state.data.doses[s.med.id][key];
+    return !(rec && rec[s.time]);
+  });
+  if(sched.length){
+    items.push({
+      done: pending.length === 0,
+      text: pending.length === 0 ? "All " + sched.length + " doses taken today" : pending.length + " dose" + (pending.length>1?"s":"") + " still to take (" + pending.map(p=>p.time).join(", ") + ")"
+    });
+  }else{
+    items.push({done:false, text:"Add your medications so GlucoCare can remind you"});
+  }
+
+  const last = readingsSorted()[0];
+  const dueAt = last ? last.ts + state.data.settings.intervalHours*3600000 : null;
+  if(dueAt && now.getTime() > dueAt){
+    items.push({done:false, text:"A check is overdue — last reading " + relTime(last.ts)});
+  }else if(dueAt){
+    items.push({done:true, text:"Next check due around " + fmtTime(dueAt)});
+  }
+
+  $("#todayPlan").innerHTML = items.map(i =>
+    '<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:13px;color:'+(i.done?"var(--muted)":"var(--ink)")+'">'
+    + '<span style="width:18px;height:18px;border-radius:50%;flex:0 0 18px;display:grid;place-items:center;font-size:10px;'
+    + (i.done ? 'background:var(--green-bg);color:var(--green)' : 'background:var(--lilac-100);color:var(--lilac-700)')
+    + '">' + (i.done ? "✓" : "•") + '</span><span>'+i.text+'</span></div>'
+  ).join("");
+}
+
+function renderLatestReadings(){
+  const list = readingsSorted().slice(0,5);
+  const el = $("#latestReadings");
+  if(!list.length){
+    el.innerHTML = '<div class="empty"><span class="big">◔</span>No readings yet. <button class="btn small" data-goto="log" type="button" style="margin-top:10px">Log your first reading</button></div>';
+    return;
+  }
+  el.innerHTML = list.map(r => readingRow(r, false)).join("");
+}
+
+function readingRow(r, withDelete){
+  const c = classify(r.mgdl);
+  const unit = r.unit || "mg/dL";
+  const val = unit === "mmol/L" ? (r.value).toFixed(1) : Math.round(r.value);
+  return '<div class="reading">'
+    + '<div class="v" style="color:'+(c.tone==="green"?"var(--green)":c.tone==="amber"?"var(--amber)":"var(--red)")+'">'+val+'<small>'+unit+'</small></div>'
+    + '<div class="meta"><div class="t">'+fmtDateTime(r.ts)+'</div>'
+    + '<div class="n">'+(r.note ? esc(r.note) : relTime(r.ts))+'</div></div>'
+    + '<span class="pill '+toneClass(c.tone)+'">'+c.label+'</span>'
+    + (withDelete ? '<button class="del" data-del-reading="'+r.id+'" title="Delete reading" aria-label="Delete reading">✕</button>' : '')
+    + '</div>';
+}
+
+/* =========================================================
+   LOG PAGE
+   ========================================================= */
+function renderLogPage(){
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+  if(!$("#rWhen").value) $("#rWhen").value = local;
+  renderRangeHint();
+  renderClassTable();
+}
+
+function renderRangeHint(){
+  const unit = state.unit;
+  const conv = v => unit === "mmol/L" ? (v/MGDL_PER_MMOL).toFixed(1) : v;
+  $("#rangeHint").innerHTML =
+    '<span>Low &lt; '+conv(70)+'</span><span>In range '+conv(70)+'–'+conv(140)+'</span><span>High '+conv(141)+'–'+conv(250)+'</span><span>Very high &gt; '+conv(250)+'</span>';
+}
+
+function renderClassTable(){
+  const unit = state.unit;
+  const conv = v => unit === "mmol/L" ? (v/MGDL_PER_MMOL).toFixed(1) : v;
+  const rows = [
+    {label:"Dangerously low", range:"< "+conv(54), tone:"red"},
+    {label:"Low", range:conv(54)+"–"+conv(69), tone:"amber"},
+    {label:"In range", range:conv(70)+"–"+conv(140), tone:"green"},
+    {label:"High", range:conv(141)+"–"+conv(250), tone:"amber"},
+    {label:"Very high", range:"> "+conv(250), tone:"red"}
+  ];
+  $("#classTable").innerHTML = rows.map(r =>
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px">'
+    + '<span class="pill '+r.tone+'">'+r.label+'</span>'
+    + '<span style="font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600">'+r.range+' '+unit+'</span></div>'
+  ).join("");
+}
+
+function setUnit(unit, rerender){
+  state.unit = unit;
+  $$("#unitSeg button").forEach(b => b.classList.toggle("active", b.dataset.unit === unit));
+  if(state.data){
+    state.data.settings.unit = unit;
+    saveData();
+  }
+  if(rerender !== false){
+    renderRangeHint();
+    renderClassTable();
+  }
+}
+
+async function handleLogSubmit(e){
+  e.preventDefault();
+  const raw = parseFloat($("#rValue").value);
+  if(!isFinite(raw) || raw <= 0){ toast("Enter a valid reading value", "err"); return; }
+  const unit = state.unit;
+  const mgdl = toMgdl(raw, unit);
+  if(mgdl > 900){ toast("That value looks too high — please check the unit", "err"); return; }
+  const whenVal = $("#rWhen").value;
+  const ts = whenVal ? new Date(whenVal).getTime() : Date.now();
+  const note = $("#rNote").value.trim();
+
+  const reading = {
+    id: uid(), value: raw, unit, mgdl, ts, note,
+    photo: state.pendingPhoto || null
+  };
+  state.data.readings.push(reading);
+  saveData();
+
+  $("#rValue").value = "";
+  $("#rNote").value = "";
+  $("#rPhoto").value = "";
+  state.pendingPhoto = null;
+  const now = new Date();
+  $("#rWhen").value = new Date(now.getTime() - now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+
+  const c = classify(mgdl);
+  toast("Reading saved — " + c.label, c.tone === "red" ? "err" : c.tone === "amber" ? "warn" : "");
+
+  if(c.urgent){
+    showUrgentAlert(reading, c);
+  }
+  state.lastReminderFired = 0;
+  renderReminders();
+  if(state.page === "dashboard") renderDashboard();
+  if(state.page === "history") renderHistory();
+  if(state.page === "meds") renderMeds();
+}
+
+function showUrgentAlert(reading, c){
+  const unit = reading.unit || "mg/dL";
+  const val = unit === "mmol/L" ? reading.value.toFixed(1) : Math.round(reading.value);
+  const isLow = c.key === "critical-low";
+  $("#alertTitle").textContent = isLow ? "⚠️ Dangerously low — act now" : "⚠️ Very high reading — contact your doctor";
+  $("#alertVal").innerHTML = val + ' <small>' + unit + '</small>';
+  $("#alertWhy").innerHTML = "<b>Why this matters:</b> " + c.reason;
+  $("#alertAdvice").textContent = isLow
+    ? "Please contact your diabetes doctor right away. If you feel confused, faint, or cannot keep fluids down, treat this as an emergency."
+    : "Please contact your diabetes doctor right away about this reading. Do not change your medication dose on your own.";
+  $("#alertSteps").innerHTML = isLow
+    ? "<li>Take 15 g of fast-acting carbohydrate now (juice, glucose tablets, regular soda).</li><li>Recheck your blood sugar in 15 minutes.</li><li>Call your diabetes doctor — and emergency services if you cannot stay conscious or keep food down.</li>"
+    : "<li>Drink water and avoid further carbohydrate-heavy food until you have spoken to your doctor.</li><li>Recheck your blood sugar in 1–2 hours.</li><li>Call your diabetes doctor now — seek urgent care if you have nausea, deep breathing, or abdominal pain.</li>";
+  $("#alertBack").classList.add("on");
+}
+
+/* =========================================================
+   FOOD
+   ========================================================= */
+const FOOD = {
+  breakfast: [
+    {n:"Steel-cut oats with cinnamon and walnuts", r:"Oats have a low glycemic index and release glucose slowly; walnuts add fat and protein that blunt the post-meal spike.", t:["Low GI","High fibre"]},
+    {n:"Greek yogurt with blueberries and chia seeds", r:"High protein and fibre with almost no added sugar — a breakfast that keeps morning glucose flat.", t:["High protein","Low sugar"]},
+    {n:"Two-egg vegetable omelette with whole-grain toast", r:"A protein-first breakfast lowers the post-meal glucose rise; the whole-grain toast adds slow carbohydrate.", t:["High protein","Slow carbs"]},
+    {n:"Avocado on rye toast with pumpkin seeds", r:"Healthy fats and fibre slow carbohydrate absorption, so the rise after eating is gentler.", t:["Healthy fats","High fibre"]},
+    {n:"Cottage cheese with sliced pear and almonds", r:"Protein plus fibre; pear has a lower glycemic index than banana or grapes.", t:["High protein","Low GI"]},
+    {n:"Vegetable poha with peanuts", r:"Flattened rice with vegetables and peanuts gives fibre and protein with a moderate glycemic load.", t:["Balanced","Fibre"]},
+    {n:"Chia pudding with unsweetened almond milk", r:"Very low glycemic load — chia's soluble fibre forms a gel that slows sugar release.", t:["Low GI","Low carb"]},
+    {n:"Chickpea flour chilla with mint chutney", r:"Chickpea flour is high in protein and low GI — a good swap for white-flour bread.", t:["High protein","Low GI"]}
+  ],
+  lunch: [
+    {n:"Grilled chicken salad with chickpeas and olive oil", r:"Lean protein plus legume fibre keeps you full for hours without a sharp glucose rise.", t:["High protein","High fibre"]},
+    {n:"Brown rice, dal and mixed vegetables", r:"Brown rice and lentils together have a lower glycemic load than white rice alone, and the dal adds protein.", t:["Balanced","Low GI"]},
+    {n:"Baked salmon with quinoa and broccoli", r:"Omega-3 fats and protein with a slow-release grain — a steady, low-spike lunch.", t:["Omega-3","Slow carbs"]},
+    {n:"Kidney bean curry with one whole-wheat roti", r:"Beans are high in fibre and protein, which flattens the glucose curve compared with a rice-based meal.", t:["High fibre","Plant protein"]},
+    {n:"Turkey and avocado whole-wheat wrap", r:"Protein and monounsaturated fat with a measured portion of whole grain — filling without a spike.", t:["High protein","Portion-aware"]},
+    {n:"Palak paneer with millet roti", r:"Paneer adds protein and spinach adds fibre; millet has a lower glycemic index than wheat.", t:["High protein","Low GI"]},
+    {n:"Lentil and vegetable soup with cucumber salad", r:"Lentils have a very low glycemic index and the soup's volume helps with portion control.", t:["Low GI","Low calorie"]},
+    {n:"Grilled tofu bowl with barley and greens", r:"Barley's soluble fibre slows digestion, and tofu gives plant protein with no added sugar.", t:["Plant protein","High fibre"]}
+  ],
+  dinner: [
+    {n:"Grilled fish with sautéed greens and a small sweet potato", r:"Protein with a measured portion of slow carbohydrate — an early, lighter dinner helps overnight glucose.", t:["High protein","Portion-aware"]},
+    {n:"Chicken and vegetable stir-fry with cauliflower rice", r:"Cauliflower rice cuts the carbohydrate load sharply while keeping the meal filling.", t:["Low carb","High protein"]},
+    {n:"Moong dal khichdi with cucumber raita", r:"Easy to digest, high in fibre and gentle on overnight glucose — a good light dinner.", t:["Low GI","Gentle"]},
+    {n:"Tofu and broccoli bowl with sesame", r:"Plant protein and fibre with very little starch, so the evening rise stays small.", t:["Low carb","Plant protein"]},
+    {n:"Stuffed bell peppers with mince and quinoa", r:"Protein, vegetables and a small portion of quinoa — balanced and satisfying without a big spike.", t:["Balanced","High protein"]},
+    {n:"Vegetable and chickpea stew", r:"Legume fibre and vegetables make a filling, low-glycemic dinner that reheats well.", t:["High fibre","Low GI"]},
+    {n:"Egg curry with two rotis and salad", r:"Eggs give high-quality protein; keeping to two rotis controls the carbohydrate portion.", t:["High protein","Portion-aware"]},
+    {n:"Baked cod with roasted Brussels sprouts", r:"Very lean protein with high-fibre vegetables — a light dinner that keeps fasting glucose steadier.", t:["Low carb","High fibre"]}
+  ],
+  snacks: [
+    {n:"A small handful of almonds and walnuts", r:"Nuts are low in carbohydrate and high in healthy fats — a snack that barely moves your glucose.", t:["Low carb","Healthy fats"]},
+    {n:"Greek yogurt with a pinch of cinnamon", r:"Protein-rich and low in sugar; cinnamon may modestly help insulin sensitivity.", t:["High protein","Low sugar"]},
+    {n:"Apple slices with one tablespoon of peanut butter", r:"Fibre from the apple plus fat and protein from the peanut butter slows the sugar release.", t:["High fibre","Balanced"]},
+    {n:"Roasted chana (chickpeas)", r:"High in fibre and plant protein with a low glycemic index — crunchy and filling.", t:["High fibre","Plant protein"]},
+    {n:"Cucumber and carrot sticks with hummus", r:"Very low carbohydrate and high in fibre; hummus adds a little protein and healthy fat.", t:["Low carb","High fibre"]},
+    {n:"One boiled egg with a pinch of salt", r:"Pure protein with essentially no carbohydrate — ideal if you are hungry between meals.", t:["High protein","Zero carb"]},
+    {n:"A cheese cube with 4–5 whole-grain crackers", r:"Protein and fat with a small, measured portion of whole grain keeps the snack low-impact.", t:["Portion-aware","Balanced"]},
+    {n:"A small bowl of mixed berries", r:"Berries are the lowest-sugar fruit, with fibre that slows absorption.", t:["Low sugar","Antioxidants"]}
+  ]
+};
+const MEAL_META = {
+  breakfast: {title:"Breakfast", em:"☀️", hint:"Start steady — protein and fibre first"},
+  lunch: {title:"Lunch", em:"◐", hint:"Balanced plate: protein, fibre, measured carbs"},
+  dinner: {title:"Dinner", em:"☾", hint:"Keep it lighter and earlier where you can"},
+  snacks: {title:"Snacks", em:"◌", hint:"Low-carb options between meals"}
+};
+
+function pickFood(meal, count){
+  const arr = FOOD[meal].slice();
+  // deterministic-ish shuffle seeded by state.foodSeed + meal
+  let seed = state.foodSeed + meal.length*37;
+  const rnd = () => { seed = (seed*9301 + 49297) % 233280; return seed/233280; };
+  for(let i=arr.length-1;i>0;i--){ const j = Math.floor(rnd()*(i+1)); const t = arr[i]; arr[i]=arr[j]; arr[j]=t; }
+  return arr.slice(0, count);
+}
+
+function renderFood(){
+  const wrap = $("#foodWrap");
+  let html = "";
+  ["breakfast","lunch","dinner","snacks"].forEach(meal=>{
+    const meta = MEAL_META[meal];
+    const items = pickFood(meal, 3);
+    html += '<div class="meal-block"><div class="meal-head"><div class="ttl"><span class="em">'+meta.em+'</span>'+meta.title+'</div>'
+      + '<span class="hint">'+meta.hint+'</span></div>';
+    items.forEach((it,i)=>{
+      html += '<div class="food-card"><div class="num">'+(i+1)+'</div><div class="body">'
+        + '<div class="nm">'+esc(it.n)+'</div>'
+        + '<div class="rs">'+esc(it.r)+'</div>'
+        + '<div class="tags">'+it.t.map(t=>'<span>'+esc(t)+'</span>').join("")+'</div>'
+        + '</div></div>';
+    });
+    html += '</div>';
+  });
+  wrap.innerHTML = html;
+}
+
+/* =========================================================
+   MEDICATIONS
+   ========================================================= */
+function medDosesToday(){
+  const key = dateKey(new Date());
+  const now = new Date();
+  const out = [];
+  state.data.meds.forEach(m=>{
+    (m.times||[]).forEach(t=>{
+      const [h,mi] = t.split(":").map(Number);
+      const at = new Date(); at.setHours(h,mi,0,0);
+      const rec = state.data.doses[m.id] && state.data.doses[m.id][key];
+      const taken = !!(rec && rec[t]);
+      const diffMin = (now.getTime() - at.getTime())/60000;
+      out.push({med:m, time:t, at, taken, diffMin, key});
+    });
+  });
+  out.sort((a,b)=>a.time.localeCompare(b.time));
+  return out;
+}
+
+function renderMeds(){
+  const doses = medDosesToday();
+  const due = doses.filter(d => !d.taken && d.diffMin >= -15 && d.diffMin <= 90);
+  const overdue = doses.filter(d => !d.taken && d.diffMin > 90);
+  const upcoming = doses.filter(d => !d.taken && d.diffMin < -15);
+
+  $("#dueHint").textContent = due.length ? due.length + " dose" + (due.length>1?"s":"") + " due now" : "Nothing due right now";
+
+  let dueHtml = "";
+  if(!doses.length){
+    dueHtml = '<div class="empty"><span class="big">℞</span>No medications added yet. Add one to get dose reminders.</div>';
+  }else{
+    const rows = due.concat(overdue);
+    if(!rows.length){
+      dueHtml = '<div class="empty" style="padding:22px"><span class="big">✓</span>All caught up — no doses waiting.</div>';
+    }else{
+      dueHtml = rows.map(d=>{
+        const cls = d.diffMin > 90 ? "overdue" : "due";
+        const label = d.diffMin > 90 ? "Overdue" : "Due now";
+        return '<div class="dose-row '+cls+'">'
+          + '<div class="dt">'+d.time+'</div>'
+          + '<div class="dn">'+esc(d.med.name)+' <small>'+esc(d.med.dose||"")+' · '+label+'</small></div>'
+          + '<button class="btn small" data-take="'+d.med.id+'|'+d.time+'|'+d.key+'" type="button">Mark taken</button>'
+          + '</div>';
+      }).join("");
+    }
+    if(upcoming.length){
+      dueHtml += '<div class="help" style="margin-top:10px">Next: ' + upcoming.slice(0,3).map(u=>u.time + " " + esc(u.med.name)).join(" · ") + '</div>';
+    }
+  }
+  $("#dueList").innerHTML = dueHtml;
+
+  $("#medCount").textContent = state.data.meds.length ? state.data.meds.length + " medication" + (state.data.meds.length>1?"s":"") : "";
+  const list = $("#medList");
+  if(!state.data.meds.length){
+    list.innerHTML = '<div class="card"><div class="empty"><span class="big">℞</span>No medications yet.<br><button class="btn small" id="addMedEmpty" type="button" style="margin-top:12px">Add your first medication</button></div></div>';
+    const b = $("#addMedEmpty");
+    if(b) b.addEventListener("click", openMedModal);
+    return;
+  }
+  const key = dateKey(new Date());
+  list.innerHTML = state.data.meds.map(m=>{
+    const times = (m.times||[]).map(t=>{
+      const rec = state.data.doses[m.id] && state.data.doses[m.id][key];
+      const taken = !!(rec && rec[t]);
+      const [h,mi] = t.split(":").map(Number);
+      const at = new Date(); at.setHours(h,mi,0,0);
+      const isDue = !taken && (Date.now() - at.getTime())/60000 >= -15 && (Date.now() - at.getTime())/60000 <= 90;
+      return '<span class="'+(taken?"taken":isDue?"due":"")+'">'+t+(taken?" ✓":"")+'</span>';
+    }).join("");
+    return '<div class="med"><div class="mic">℞</div><div style="min-width:0;flex:1">'
+      + '<div class="nm">'+esc(m.name)+'</div>'
+      + '<div class="ds">'+esc(m.dose||"No dose set")+'</div>'
+      + '<div class="times">'+times+'</div>'
+      + '</div><div class="acts">'
+      + '<button class="btn ghost small" data-edit-med="'+m.id+'" type="button">Edit</button>'
+      + '<button class="icon-btn" data-del-med="'+m.id+'" title="Delete" aria-label="Delete medication">✕</button>'
+      + '</div></div>';
+  }).join("");
+}
+
+function openMedModal(med){
+  const isEdit = !!med;
+  const m = med || {id:null, name:"", dose:"", times:["08:00"]};
+  $("#modalBody").innerHTML =
+    '<h3>'+(isEdit?"Edit medication":"Add medication")+'</h3>'
+    + '<p>Set the dose and the times you take it. Reminders appear while GlucoCare is open.</p>'
+    + '<div class="field"><label for="mName">Medication name</label><input id="mName" type="text" placeholder="e.g. Metformin" value="'+esc(m.name)+'"></div>'
+    + '<div class="field"><label for="mDose">Dose</label><input id="mDose" type="text" placeholder="e.g. 500 mg" value="'+esc(m.dose||"")+'"></div>'
+    + '<div class="field"><label>Times</label><div id="mTimes" style="display:grid;gap:8px"></div>'
+    + '<button class="btn ghost small" id="addTime" type="button" style="margin-top:8px">＋ Add another time</button></div>'
+    + '<div class="acts"><button class="btn ghost" id="medCancel" type="button">Cancel</button>'
+    + '<button class="btn" id="medSave" type="button">'+(isEdit?"Save changes":"Add medication")+'</button></div>';
+  const timesWrap = $("#mTimes");
+  const addTimeRow = (val)=>{
+    const row = document.createElement("div");
+    row.style.display = "flex"; row.style.gap = "8px";
+    row.innerHTML = '<input type="time" value="'+(val||"08:00")+'" style="flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px">'
+      + '<button class="icon-btn" type="button" title="Remove">✕</button>';
+    row.querySelector("button").addEventListener("click", ()=>{ if(timesWrap.children.length>1) row.remove(); });
+    timesWrap.appendChild(row);
+  };
+  (m.times && m.times.length ? m.times : ["08:00"]).forEach(addTimeRow);
+  $("#addTime").addEventListener("click", ()=>addTimeRow("12:00"));
+  $("#medCancel").addEventListener("click", closeModal);
+  $("#medSave").addEventListener("click", ()=>{
+    const name = $("#mName").value.trim();
+    const dose = $("#mDose").value.trim();
+    const times = Array.from(timesWrap.querySelectorAll("input[type=time]")).map(i=>i.value).filter(Boolean);
+    if(!name){ toast("Enter a medication name", "err"); return; }
+    if(!times.length){ toast("Add at least one time", "err"); return; }
+    const uniq = Array.from(new Set(times)).sort();
+    if(isEdit){
+      const target = state.data.meds.find(x=>x.id===m.id);
+      if(target){ target.name = name; target.dose = dose; target.times = uniq; }
+    }else{
+      state.data.meds.push({id:uid(), name, dose, times:uniq});
+    }
+    saveData();
+    closeModal();
+    renderMeds();
+    renderReminders();
+    if(state.page === "dashboard") renderDashboard();
+    toast(isEdit ? "Medication updated" : "Medication added");
+  });
+  $("#modalBack").classList.add("on");
+  setTimeout(()=>{ const n = $("#mName"); if(n) n.focus(); }, 60);
+}
+
+function closeModal(){ $("#modalBack").classList.remove("on"); }
+
+function markDoseTaken(medId, time, key){
+  if(!state.data.doses[medId]) state.data.doses[medId] = {};
+  if(!state.data.doses[medId][key]) state.data.doses[medId][key] = {};
+  state.data.doses[medId][key][time] = true;
+  saveData();
+  renderMeds();
+  renderReminders();
+  if(state.page === "dashboard") renderDashboard();
+  toast("Dose marked as taken");
+}
+
+/* =========================================================
+   REMINDERS
+   ========================================================= */
+function nextCheckInfo(){
+  const last = readingsSorted()[0];
+  const intervalMs = state.data.settings.intervalHours * 3600000;
+  const remMs = state.data.settings.reminderMin * 60000;
+  if(!last){
+    return {hasData:false, dueAt:null, overdue:false, nextReminder:null};
+  }
+  const dueAt = last.ts + intervalMs;
+  const now = Date.now();
+  if(now < dueAt){
+    return {hasData:true, dueAt, overdue:false, nextReminder:null, last};
+  }
+  const elapsed = now - dueAt;
+  const nextReminder = dueAt + Math.ceil(elapsed/remMs)*remMs;
+  return {hasData:true, dueAt, overdue:true, nextReminder, last};
+}
+
+function renderReminders(){
+  const zone = $("#reminderZone");
+  if(!zone || !state.data) return;
+  const parts = [];
+
+  const info = nextCheckInfo();
+  if(info.overdue){
+    const remMs = state.data.settings.reminderMin * 60000;
+    const nextIn = Math.max(0, info.nextReminder - Date.now());
+    const mm = Math.floor(nextIn/60000), ss = Math.floor((nextIn%60000)/1000);
+    parts.push(
+      '<div class="reminder urgent" id="checkReminder">'
+      + '<div class="ric">🩸</div>'
+      + '<div style="flex:1;min-width:0">'
+      + '<div class="rt">Blood sugar check overdue</div>'
+      + '<div class="rd">Your last reading was ' + relTime(info.last.ts) + ' — a check was due at ' + fmtTime(info.dueAt) + '. '
+      + 'Next reminder in <span class="count" id="remCountdown">' + pad(mm) + ':' + pad(ss) + '</span>. Reminders stop as soon as you log a reading.</div>'
+      + '</div>'
+      + '<div class="ract"><button class="btn small" data-goto="log" type="button">Log reading now</button></div>'
+      + '</div>'
+    );
+  }
+
+  const doses = medDosesToday();
+  const dueDoses = doses.filter(d => !d.taken && d.diffMin >= -15 && d.diffMin <= 90);
+  if(dueDoses.length){
+    const names = dueDoses.map(d => esc(d.med.name) + " " + (d.med.dose||"") + " at " + d.time).join(" · ");
+    parts.push(
+      '<div class="reminder">'
+      + '<div class="ric">℞</div>'
+      + '<div style="flex:1;min-width:0"><div class="rt">Medication due now</div>'
+      + '<div class="rd">' + names + '</div></div>'
+      + '<div class="ract"><button class="btn small" data-goto="meds" type="button">Open medications</button></div>'
+      + '</div>'
+    );
+  }
+
+  zone.innerHTML = parts.join("");
+}
+
+function tick(){
+  if(!state.data) return;
+  // countdown
+  const cd = $("#remCountdown");
+  if(cd){
+    const info = nextCheckInfo();
+    if(info.overdue){
+      const nextIn = Math.max(0, info.nextReminder - Date.now());
+      const mm = Math.floor(nextIn/60000), ss = Math.floor((nextIn%60000)/1000);
+      cd.textContent = pad(mm) + ":" + pad(ss);
+    }
+  }
+  // fire reminders on boundary
+  const info = nextCheckInfo();
+  if(info.overdue && Date.now() >= info.nextReminder && state.lastReminderFired !== info.nextReminder){
+    state.lastReminderFired = info.nextReminder;
+    notify("Blood sugar check overdue", "Please log your reading — reminders repeat every " + state.data.settings.reminderMin + " minutes until you do.");
+    toast("Reminder: log your blood sugar reading", "warn");
+    renderReminders();
+  }
+  // medication boundary
+  const doses = medDosesToday();
+  doses.forEach(d=>{
+    if(d.taken) return;
+    const fireKey = d.med.id + "|" + d.key + "|" + d.time;
+    if(d.diffMin >= 0 && d.diffMin < 1 && !state.lastMedFired[fireKey]){
+      state.lastMedFired[fireKey] = true;
+      notify("Medication due: " + d.med.name, (d.med.dose||"") + " at " + d.time);
+      toast("Medication due: " + d.med.name + " " + (d.med.dose||""), "warn");
+      renderReminders();
+    }
+  });
+  // refresh reminder zone every minute-ish for relative times
+  if(!state._lastReminderRender || Date.now() - state._lastReminderRender > 30000){
+    state._lastReminderRender = Date.now();
+    renderReminders();
+  }
+}
+
+function startTicker(){
+  if(state._ticker) clearInterval(state._ticker);
+  state._ticker = setInterval(tick, 1000);
+  renderReminders();
+}
+
+function notify(title, body){
+  try{
+    if("Notification" in window && Notification.permission === "granted"){
+      new Notification(title, {body: body, tag: "glucocare"});
+    }
+  }catch(e){ /* ignore */ }
+}
+
+function requestNotifications(){
+  if(!("Notification" in window)){
+    toast("This browser does not support notifications — in-app banners still work", "warn");
+    return;
+  }
+  if(Notification.permission === "granted"){
+    toast("Reminders are already enabled");
+    return;
+  }
+  Notification.requestPermission().then(p=>{
+    if(p === "granted") toast("Reminders enabled — you'll get a notification when a check or dose is due");
+    else toast("Notifications blocked — in-app banners will still remind you", "warn");
+  });
+}
+
+/* =========================================================
+   HISTORY
+   ========================================================= */
+function renderHistory(){
+  const filter = $("#histFilter").value;
+  let list = readingsSorted();
+  if(filter === "normal") list = list.filter(r => classify(r.mgdl).key === "normal");
+  if(filter === "high") list = list.filter(r => ["high","very-high"].includes(classify(r.mgdl).key));
+  if(filter === "low") list = list.filter(r => ["low","critical-low"].includes(classify(r.mgdl).key));
+
+  $("#historyCount").textContent = state.data.readings.length
+    ? state.data.readings.length + " readings recorded · showing " + list.length
+    : "No readings recorded yet";
+
+  const el = $("#historyList");
+  if(!list.length){
+    el.innerHTML = '<div class="empty"><span class="big">≡</span>No readings match this filter.</div>';
+    return;
+  }
+  // group by date
+  const groups = {};
+  list.forEach(r=>{
+    const k = dateKey(r.ts);
+    if(!groups[k]) groups[k] = [];
+    groups[k].push(r);
+  });
+  const keys = Object.keys(groups).sort().reverse();
+  el.innerHTML = keys.map(k=>{
+    const d = new Date(k + "T00:00:00");
+    const dayReadings = groups[k];
+    const inR = dayReadings.filter(r=>classify(r.mgdl).key==="normal").length;
+    return '<div style="margin-bottom:6px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 6px;border-bottom:1px solid var(--line)">'
+      + '<span style="font-size:12.5px;font-weight:700;color:var(--ink-2)">'+d.toLocaleDateString(undefined,{weekday:"long", day:"numeric", month:"short"})+'</span>'
+      + '<span class="pill '+(inR===dayReadings.length?"green":"amber")+'">'+inR+'/'+dayReadings.length+' in range</span>'
+      + '</div>'
+      + dayReadings.map(r=>readingRow(r, true)).join("")
+      + '</div>';
+  }).join("");
+}
+
+function exportData(){
+  const payload = {
+    app: "GlucoCare",
+    exportedAt: new Date().toISOString(),
+    user: {name: state.user.name, email: state.user.email},
+    readings: state.data.readings,
+    medications: state.data.meds,
+    doses: state.data.doses,
+    settings: state.data.settings
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "glucocare-export-" + dateKey(new Date()) + ".json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  toast("Export downloaded");
+}
+
+/* =========================================================
+   DEMO SEED
+   ========================================================= */
+async function seedDemo(){
+  const db = loadDB();
+  if(db.users.some(u => u.email === "demo@glucocare.app")) return;
+
+  const salt = randomSalt();
+  const hash = await hashPassword("demo1234", salt);
+  const user = {id:"demo-user", name:"Priya Sharma", email:"demo@glucocare.app", salt, hash, createdAt: Date.now()};
+  db.users.push(user);
+  saveDB(db);
+
+  const data = defaultData();
+  data.settings = {intervalHours:4, reminderMin:30, unit:"mg/dL"};
+  data.meds = [
+    {id:"med-metformin", name:"Metformin", dose:"500 mg", times:["08:00","20:00"]},
+    {id:"med-glargine", name:"Insulin glargine", dose:"10 units", times:["22:00"]}
+  ];
+
+  const now = new Date();
+  const readings = [];
+  // 10 days of history, 2-3 readings per day, mostly in range with a couple of highs
+  const plan = [
+    {d:9, vals:[[7,20,112,"Fasting, before breakfast"],[13,10,148,"After lunch"],[20,30,126,"Before bed"]]},
+    {d:8, vals:[[7,15,104,"Fasting"],[12,45,162,"After lunch — rice"],[19,50,131,"Before dinner"]]},
+    {d:7, vals:[[7,30,118,"Fasting"],[13,5,139,"After lunch"],[21,0,120,"Before bed"]]},
+    {d:6, vals:[[7,10,96,"Fasting"],[12,30,155,"After lunch"],[20,15,128,"Before bed"]]},
+    {d:5, vals:[[7,25,108,"Fasting"],[13,20,134,"After lunch"],[21,10,115,"Before bed"]]},
+    {d:4, vals:[[7,5,101,"Fasting"],[12,50,171,"After lunch — sweet"],[20,40,142,"Before bed"]]},
+    {d:3, vals:[[7,35,99,"Fasting"],[13,0,128,"After lunch"],[21,20,118,"Before bed"]]},
+    {d:2, vals:[[7,15,94,"Fasting"],[12,40,122,"After lunch"],[20,55,110,"Before bed"]]},
+    {d:1, vals:[[7,20,102,"Fasting"],[13,15,131,"After lunch"],[21,5,116,"Before bed"]]},
+    {d:0, vals:[[7,30,106,"Fasting, before breakfast"]]}
+  ];
+  plan.forEach(p=>{
+    p.vals.forEach(v=>{
+      const dt = new Date(now);
+      dt.setDate(dt.getDate() - p.d);
+      dt.setHours(v[0], v[1], 0, 0);
+      if(dt.getTime() > now.getTime()) return;
+      readings.push({
+        id: uid(), value: v[2], unit:"mg/dL", mgdl: v[2], ts: dt.getTime(), note: v[3], photo:null
+      });
+    });
+  });
+  data.readings = readings;
+
+  // seed dose history: mostly taken, a few missed
+  const doses = {};
+  for(let i=1;i<=9;i++){
+    const d = new Date(now); d.setDate(d.getDate()-i);
+    const key = dateKey(d);
+    data.meds.forEach(m=>{
+      if(!doses[m.id]) doses[m.id] = {};
+      if(!doses[m.id][key]) doses[m.id][key] = {};
+      m.times.forEach((t,idx)=>{
+        // miss roughly 1 in 6 doses
+        const miss = ((i*7 + idx*3) % 6) === 0;
+        if(!miss) doses[m.id][key][t] = true;
+      });
+    });
+  }
+  // today: morning metformin taken
+  const todayKey = dateKey(now);
+  doses["med-metformin"] = doses["med-metformin"] || {};
+  doses["med-metformin"][todayKey] = {"08:00": true};
+  data.doses = doses;
+
+  localStorage.setItem(DATA_PREFIX + user.id, JSON.stringify(data));
+}
+
+/* =========================================================
+   WIRING
+   ========================================================= */
+function wire(){
+  $("#tabLogin").addEventListener("click", ()=>setAuthMode("login"));
+  $("#tabSignup").addEventListener("click", ()=>setAuthMode("signup"));
+  $("#authForm").addEventListener("submit", handleAuth);
+  $("#demoBtn").addEventListener("click", async ()=>{
+    $("#fEmail").value = "demo@glucocare.app";
+    $("#fPass").value = "demo1234";
+    setAuthMode("login");
+    const db = loadDB();
+    const user = db.users.find(u => u.email === "demo@glucocare.app");
+    if(user){ startSession(user); toast("Signed in to the demo account"); }
+    else { authMsg("Demo account is still being prepared — try again in a moment."); }
+  });
+  $("#logoutBtn").addEventListener("click", logout);
+
+  $$(".nav-item, .bottom-nav button").forEach(b=>{
+    b.addEventListener("click", ()=>go(b.dataset.page));
+  });
+  document.addEventListener("click", (e)=>{
+    const g = e.target.closest("[data-goto]");
+    if(g){ go(g.dataset.goto); return; }
+    const take = e.target.closest("[data-take]");
+    if(take){
+      const [medId, time, key] = take.dataset.take.split("|");
+      markDoseTaken(medId, time, key);
+      return;
+    }
+    const editMed = e.target.closest("[data-edit-med]");
+    if(editMed){
+      const m = state.data.meds.find(x=>x.id === editMed.dataset.editMed);
+      if(m) openMedModal(m);
+      return;
+    }
+    const delMed = e.target.closest("[data-del-med]");
+    if(delMed){
+      const id = delMed.dataset.delMed;
+      const m = state.data.meds.find(x=>x.id === id);
+      if(!m) return;
+      if(confirm("Delete " + m.name + "? Its reminder times will be removed.")){
+        state.data.meds = state.data.meds.filter(x=>x.id !== id);
+        delete state.data.doses[id];
+        saveData();
+        renderMeds(); renderReminders();
+        if(state.page === "dashboard") renderDashboard();
+        toast("Medication deleted");
+      }
+      return;
+    }
+    const delReading = e.target.closest("[data-del-reading]");
+    if(delReading){
+      const id = delReading.dataset.delReading;
+      if(confirm("Delete this reading? This cannot be undone.")){
+        state.data.readings = state.data.readings.filter(r=>r.id !== id);
+        saveData();
+        renderHistory();
+        if(state.page === "dashboard") renderDashboard();
+        renderReminders();
+        toast("Reading deleted");
+      }
+      return;
+    }
+  });
+
+  // log form
+  $("#logForm").addEventListener("submit", handleLogSubmit);
+  $$("#unitSeg button").forEach(b=>{
+    b.addEventListener("click", ()=>setUnit(b.dataset.unit));
+  });
+  $("#rPhoto").addEventListener("change", (e)=>{
+    const file = e.target.files && e.target.files[0];
+    if(!file) { state.pendingPhoto = null; return; }
+    if(file.size > 1.5*1024*1024){
+      toast("Photo is large — please choose one under 1.5 MB", "warn");
+      e.target.value = "";
+      state.pendingPhoto = null;
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = ()=>{ state.pendingPhoto = reader.result; };
+    reader.readAsDataURL(file);
+  });
+
+  // food
+  $("#refreshFood").addEventListener("click", ()=>{
+    state.foodSeed = Math.floor(Math.random()*100000);
+    renderFood();
+    toast("New meal ideas loaded");
+  });
+
+  // meds
+  $("#addMedBtn").addEventListener("click", ()=>openMedModal(null));
+  $("#notifBtn").addEventListener("click", requestNotifications);
+  $("#notifBtn2").addEventListener("click", requestNotifications);
+  $("#intervalHours").addEventListener("change", (e)=>{
+    state.data.settings.intervalHours = Number(e.target.value);
+    saveData(); renderReminders();
+    toast("Check interval set to every " + e.target.value + " hours");
+  });
+  $("#reminderMin").addEventListener("change", (e)=>{
+    state.data.settings.reminderMin = Number(e.target.value);
+    saveData(); renderReminders();
+    toast("Reminders will repeat every " + e.target.value + " minutes");
+  });
+
+  // history
+  $("#histFilter").addEventListener("change", renderHistory);
+  $("#exportBtn").addEventListener("click", exportData);
+
+  // modals
+  $("#alertDismiss").addEventListener("click", ()=>$("#alertBack").classList.remove("on"));
+  $("#alertAck").addEventListener("click", ()=>{
+    $("#alertBack").classList.remove("on");
+    toast("Please contact your diabetes doctor about this reading", "warn");
+  });
+  $("#modalBack").addEventListener("click", (e)=>{ if(e.target === $("#modalBack")) closeModal(); });
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape"){
+      $("#modalBack").classList.remove("on");
+      $("#alertBack").classList.remove("on");
+    }
+  });
+}
+
+/* ---------- boot ---------- */
+async function boot(){
+  wire();
+  try{ await seedDemo(); }catch(e){ /* seeding is best-effort */ }
+
+  const sid = localStorage.getItem(SESSION_KEY);
+  if(sid){
+    const db = loadDB();
+    const user = db.users.find(u => u.id === sid);
+    if(user){
+      state.user = user;
+      state.data = loadData(user.id);
+      state.unit = state.data.settings.unit || "mg/dL";
+      enterApp();
+      return;
+    }
+    localStorage.removeItem(SESSION_KEY);
+  }
+  setAuthMode("login");
+}
+
+boot();
+</script>
+</body>
+</html>
